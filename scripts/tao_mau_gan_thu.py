@@ -1,7 +1,8 @@
 """Tạo file Excel gán thử cho từng người trong nhóm.
 
-Chạy: python tao_mau_gan_thu.py [số vòng]   (mặc định vòng 1)
-Kết quả: gan_nhan/vong<N>/gan_thu_vong<N>_<Tên>.xlsx cho từng người và tong_hop_vong<N>.csv (ghi nguồn mẫu).
+Chạy (từ thư mục gốc repo): python scripts/tao_mau_gan_thu.py [số vòng]   (mặc định vòng 1)
+Đầu vào: data/cleaned/masked.csv.
+Kết quả: data/gan_nhan/vong<N>/gan_thu_vong<N>_<Tên>.xlsx cho từng người và tong_hop_vong<N>.csv (ghi nguồn mẫu).
 Câu đã dùng ở các vòng trước không bị lấy lại.
 """
 import random
@@ -13,9 +14,9 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.worksheet.datavalidation import DataValidation
 
-HERE = Path(__file__).parent
-MASKED = HERE / "cleaned" / "masked.csv"
-OUT_ROOT = HERE / "gan_nhan"
+DATA = Path(__file__).resolve().parents[1] / "data"
+MASKED = DATA / "cleaned" / "masked.csv"
+OUT_ROOT = DATA / "gan_nhan"
 NGUOI_GAN = {"Hao": "Hảo", "Sinh": "Sinh", "Trieu": "Triệu", "Long": "Long"}
 N_CAU, N_NGAU_NHIEN = 240, 120  # còn lại chia đều cho các nhóm nhãn hiếm của vòng
 MAX_MOI_BAI = 2

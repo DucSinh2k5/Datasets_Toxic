@@ -4,7 +4,8 @@ Colab (bật GPU): tải file này, danh_sach_dia_danh_truong.csv và file xlsx 
     !pip install -q transformers sentencepiece protobuf openpyxl
     !python clean_dataset.py [file_xlsx_goc]
 Che theo 2 lớp: regex trước, sau đó NER chạy ngay trên máy đang chạy script, không gửi tới API nào.
-Kết quả nằm trong cleaned/: masked.csv để gán nhãn, private/ giữ kín (bảng ID, mẫu soát tay).
+Kết quả nằm trong cleaned/ cạnh script: masked.csv để gán nhãn, private/ giữ kín (bảng ID, mẫu soát tay).
+Tải cleaned/ về rồi đặt vào data/cleaned/ của repo (xem TIEN_TRINH_DATASET.md, mục "Cách chạy trên Colab").
 File gốc chỉ được đọc, không bị sửa. Ngôn ngữ (emoji, từ tục, teencode, chữ kéo dài) giữ nguyên.
 """
 import csv
@@ -22,6 +23,9 @@ HERE = Path(__file__).parent
 DEFAULT_INPUT = HERE / "tonghopcmt_n12_backup_truoc_khi_them_toxic.xlsx"
 OUT = HERE / "cleaned"
 PRIVATE = OUT / "private"
+# Bảng ID của lần chạy chính thức. Khi chạy trong repo, script đọc bảng này nếu cleaned/ cạnh script chưa có,
+# để post_uid và split không đổi. Trên Colab thì tải id_map.csv lên cleaned/private/ trước khi chạy.
+REPO_ID_MAP = HERE.parent / "data" / "cleaned" / "private" / "id_map.csv"
 SEED = 42
 
 UP = "A-ZĐÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴ"
@@ -121,7 +125,8 @@ EMOJI = re.compile(r"[\U00010000-\U0010FFFF☀-➿]")
 PLACEHOLDER = re.compile(r"\[(?:URL|EMAIL|USER|STUDENT_ID|PHONE|NUMBER|NAME|ADDRESS)\]")
 AD = re.compile(r"(?i)inbox|\bib\b|zalo|tuyển dụng|cho thuê|phòng trọ|\bbán\s|\bpass\s|\bship\b|giá\s\d")
 
-# Mô hình -> nhãn của mô hình cần che -> token. Sửa ở đây nếu compare_ner.py cho thấy cách kết hợp khác tốt hơn.
+# Mô hình -> nhãn của mô hình cần che -> token. Sửa ở đây nếu so sánh NER cho thấy cách kết hợp khác tốt hơn
+# (script so sánh compare_ner.py đã bỏ khỏi repo ngày 2026-11-25, lấy lại từ commit 7fa0312 nếu cần).
 # Đã bỏ OpenMed: lần chạy 2026-11-11 nó che nhầm "1", "b", "A2", "ptit" thành địa chỉ, nay địa chỉ dùng luật ADDRESS.
 NER_MODELS = {"NlpHUST/ner-vietnamese-electra-base": {"PERSON": "[NAME]"}}
 NER_BATCH_SIZE, CHUNK_CHARS, CHUNK_OVERLAP = 32, 600, 50  # bài đăng dài phải cắt nhỏ vì mô hình giới hạn 512 token
@@ -359,7 +364,10 @@ def self_check():
 def load_id_map(post_ids):
     """Giữ ID ổn định giữa các lần chạy, ID mới là ngẫu nhiên nên không suy ngược được."""
     path = PRIVATE / "id_map.csv"
-    known = pd.read_csv(path, dtype=str) if path.exists() else pd.DataFrame(columns=["post_id", "post_uid"])
+    source = path if path.exists() else REPO_ID_MAP if REPO_ID_MAP.exists() else None
+    if source is None:
+        print("Không thấy id_map.csv: mọi post_uid và split sẽ mới, gold các vòng không còn khớp", flush=True)
+    known = pd.read_csv(source, dtype=str) if source else pd.DataFrame(columns=["post_id", "post_uid"])
     mapping = dict(zip(known.post_id, known.post_uid))
     for pid in post_ids:
         mapping.setdefault(pid, "p" + secrets.token_hex(6))

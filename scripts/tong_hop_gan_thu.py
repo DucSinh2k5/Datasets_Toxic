@@ -1,6 +1,6 @@
 """Gộp các file gán thử của nhiều người, đánh dấu câu lệch nhãn và tính độ đồng thuận.
 
-Chạy: python tong_hop_gan_thu.py <file_ra.xlsx> <file_gan_1.xlsx> <file_gan_2.xlsx> [...]
+Chạy: python scripts/tong_hop_gan_thu.py <file_ra.xlsx> <file_gan_1.xlsx> <file_gan_2.xlsx> [...]
 Tên người lấy từ tên file (gan_thu_vong1_<Tên>.xlsx).
 
 Quy tắc gộp (theo quy chuẩn bản nháp 2, mục 7):

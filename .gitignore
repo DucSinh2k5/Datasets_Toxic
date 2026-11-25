@@ -1,26 +1,33 @@
-# Repo này chỉ chứa code và tài liệu. Dữ liệu bình luận (kể cả bản đã che) không đưa lên đây.
+# Repo này chỉ chứa code và tài liệu. Dữ liệu bình luận (kể cả bản đã che) nằm trong data/ và không đưa lên đây.
 # Secret
 .env
 *.env
-# Dữ liệu
+# Dữ liệu: chặn cả data/, chỉ giữ thống kê làm sạch data/cleaned/report.json
+data/*
+!data/cleaned/
+data/cleaned/*
+!data/cleaned/report.json
+# Chặn thêm file dữ liệu ở bất kỳ đâu (phòng đặt nhầm chỗ)
 *.xlsx
 *.xls
 *.parquet
 *.zip
 *.bin
-cleaned/*
-!cleaned/report.json
-cleaned_*/
-gan_nhan/
+/cleaned/
+/cleaned_*/
+/gan_nhan/
+scripts/cleaned/
+huggingface/data/
+# Dữ liệu của nhóm khác, không thuộc dự án
 data_splits_*/
 results_shared/
 shared_dataset.csv
 comment_*.csv
-facebook_post_comment_scraper/output/
-facebook_post_comment_scraper/test_output/
-facebook_post_comment_scraper/facebook_group_comment_scraper/output/
+# Đầu ra có văn bản bình luận của giai đoạn cũ, nếu lấy lại code từ commit 7fa0312 và chạy lại
 results_chuan/*/test_predictions.csv
 results_chuan/*/val_errors.csv
+facebook_post_comment_scraper/**/output/
+facebook_post_comment_scraper/test_output/
 E5+E6/E5+E6/data/
 E5+E6/E5+E6/resources/vncorenlp/
 # Môi trường

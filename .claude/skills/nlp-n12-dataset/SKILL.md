@@ -1,38 +1,40 @@
 ---
 name: nlp-n12-dataset
-description: Tiếp tục dự án NLP_N12 (BTL1) - xây bộ dữ liệu bình luận sinh viên PTIT gán nhãn 4 hướng (toxicity, topic, stance, emotion). Dùng khi người dùng hỏi về tiến trình, gán nhãn các vòng, tính κ, chốt gold, quy chuẩn gán nhãn, gán bằng LLM, hoặc "làm gì tiếp" trong thư mục BTL1.
+description: Tiếp tục dự án NLP_N12 (BTL1) - xây bộ dữ liệu bình luận sinh viên PTIT gán nhãn 4 hướng (toxicity, topic, stance, emotion). Dùng khi người dùng hỏi về tiến trình, gán nhãn các vòng, tính κ, chốt gold, quy chuẩn gán nhãn, gán bằng LLM, hoặc "làm gì tiếp" trong repo dataset NLP_N12.
 ---
 
 # Bàn giao dự án NLP_N12: dataset 4 hướng
 
-Bàn giao ngày 2026-11-25. **Nguồn sự thật là `BTL1/TIEN_TRINH_DATASET.md`**: đọc file đó trước, và cập nhật nó (đầu file, mục "Đang ở đâu", checklist, nhật ký) sau mỗi bước hoàn thành. File skill này tóm tắt bối cảnh, quy tắc làm việc và lộ trình; nếu hai file lệch nhau thì tin TIEN_TRINH và kiểm tra lại dữ liệu.
+Bàn giao ngày 2026-11-25, sắp xếp lại cấu trúc repo cùng ngày. **Nguồn sự thật là `TIEN_TRINH_DATASET.md`** ở thư mục gốc repo: đọc file đó trước, và cập nhật nó (đầu file, mục "Đang ở đâu", checklist, nhật ký) sau mỗi bước hoàn thành. File skill này tóm tắt bối cảnh, quy tắc làm việc và lộ trình; nếu hai file lệch nhau thì tin TIEN_TRINH và kiểm tra lại dữ liệu.
 
 ## 1. Bối cảnh
 
-- Nhóm 4 người: **Hảo, Sinh, Triệu, Long**. Người dùng là **Sinh** (git user `DucSinh2k5`). Trao đổi bằng tiếng Việt.
-- Dữ liệu: 141.276 bình luận cào từ 16 group Facebook sinh viên PTIT, 22.144 bài đăng. Sau làm sạch và che thông tin: **136.609 dòng** trong `cleaned/masked.csv`, chia train/val/test theo bài đăng 70/15/15, seed 42 (95.667 / 20.458 / 20.484).
-- Mục tiêu: gán nhãn 4 hướng, viết paper và công bố dataset nếu qua được rà soát pháp lý, đạo đức.
+- Nhóm 4 người: **Hảo, Sinh, Triệu, Long**. Skill viết từ phiên làm việc của **Sinh** (git user `DucSinh2k5`); người dùng có thể là bất kỳ thành viên nào, xem git user hoặc hỏi khi cần biết ai đang làm (gán thử phải độc lập). Trao đổi bằng tiếng Việt.
+- Dữ liệu: 141.276 bình luận cào từ 16 group Facebook sinh viên PTIT, 22.144 bài đăng. Sau làm sạch và che thông tin: **136.609 dòng** trong `data/cleaned/masked.csv`, chia train/val/test theo bài đăng 70/15/15, seed 42 (95.667 / 20.458 / 20.484).
+- Mục tiêu: gán nhãn 4 hướng, viết paper và công bố dataset trên Hugging Face (gated) nếu qua được rà soát pháp lý, đạo đức.
 - Lịch sử: giai đoạn trước nhóm làm bài toán Toxic nhị phân (E1–E8 trên 9.962 câu, quy chuẩn v2.2 "Keyword-Priority"). Kết quả đó **không phải** của dataset mới. Quy chuẩn cũ coi mọi từ tục là Toxic nên tra 56 từ khóa đã đạt F1 0,827; vì vậy hướng mới tách profane khỏi attack.
 
 ### Phạm vi, những thứ KHÔNG thuộc dự án
 - `shared_dataset.csv`, `data_splits_shared/`, `results_shared/`: của **nhóm khác** (nhãn do ollama qwen3 gán). Không trộn vào phân tích của N12.
 - Thư mục cha `NPL-NMF` (backend, frontend, docs, tóm tắt văn bản NMF): **dự án khác**, không liên quan.
 - `tonghopcmt_n12.xlsx`: 3.123 dòng cuối là toxic ngoài PTIT. Đầu vào làm sạch phải là `tonghopcmt_n12_backup_truoc_khi_them_toxic.xlsx`.
+- Phần giai đoạn Toxic nhị phân (`notebooks/` E1–E8, `E5+E6/`, `results_chuan/`, báo cáo, kế hoạch, quy chuẩn nhị phân), scraper, `compare_ner.py` và các script cũ đã xóa khỏi repo ngày 2026-11-25. Cần thì lấy lại: `git checkout 7fa0312 -- <đường dẫn>`.
 
 ## 2. Quy tắc làm việc (bắt buộc)
 
-- **Riêng tư:** chỉ dùng bản đã che (`text_public`, `cleaned/masked.csv`) khi gửi cho LLM hay dịch vụ ngoài. Không đọc ra, không gửi, không chia sẻ `cleaned/private/`, `cleaned_lan2/`, `cleaned_ban_cu/` và các file `.xlsx` thô. Gửi qua API thì dùng gói không lấy dữ liệu để huấn luyện.
+- **Riêng tư:** chỉ dùng bản đã che (`text_public`, `data/cleaned/masked.csv`) khi gửi cho LLM hay dịch vụ ngoài. Không đọc ra, không gửi, không chia sẻ `data/cleaned/private/`, `data/cleaned_lan2/`, `data/cleaned_ban_cu/` và các file `.xlsx` thô. Gửi qua API thì dùng gói không lấy dữ liệu để huấn luyện.
 - **Không sửa gold mà không sao lưu.** Mọi thay đổi nhãn ghi nguồn gốc ở cột `*_cach_chot` (ví dụ `dong_y`, `phan_xu`, `ra_soat_claude`).
 - **Gán thử phải độc lập**: mỗi người gán riêng rồi mới họp. Không dùng nhãn của người khác hay gold khi gán.
 - **Không dùng tập Test để sửa prompt, quy chuẩn hay mô hình.** Mẫu gán thử chỉ lấy từ train.
 - Đề xuất trước, sửa sau: khi rà nhãn, ghi đề xuất và lý do ra file Excel cho nhóm duyệt; chỉ ghi thẳng vào gold khi người dùng bảo. Nếu Claude là người chốt, ghi rõ để paper khai báo.
-- Không commit hay đẩy dữ liệu: `gan_nhan/` có `.gitignore` chặn toàn bộ; thư mục BTL1 chưa được git theo dõi.
-- Đọc docx: máy không có pandoc và python-docx. Dùng `python scripts_ra_soat/docx2txt.py <file.docx>`; script ghi `<tên>.docx.txt` vào thư mục đang đứng, nên chạy từ thư mục tạm.
+- Không commit hay đẩy dữ liệu: mọi dữ liệu nằm trong `data/`; `.gitignore` gốc chặn cả `data/` (trừ `data/cleaned/report.json`) và mọi `.xlsx`, `.parquet`, `.zip`. Xem `git status` trước khi commit.
+- Chạy lệnh từ thư mục gốc repo. Script gán thử cần `pandas`, `openpyxl`; có máy chưa cài `openpyxl` (`pip install openpyxl`).
+- Đọc docx: máy không có pandoc và python-docx. Dùng `python scripts/ra_soat/docx2txt.py <file.docx>`; script ghi `<tên>.docx.txt` vào thư mục đang đứng, nên chạy từ thư mục tạm.
 - Windows: in tiếng Việt từ Python cần `PYTHONIOENCODING=utf-8`.
 
 ## 3. Bộ nhãn và các quy tắc đã chốt
 
-Tài liệu: `Quy_chuan_gan_nhan_4_huong_NLP_N12.docx` (bản nháp 3, mục 7 là quy tắc rút ra từ vòng 1), `Thiet_ke_du_lieu_da_huong_NLP_N12.docx`.
+Tài liệu: `docs/Quy_chuan_gan_nhan_4_huong_NLP_N12.docx` (bản nháp 3, mục 7 là quy tắc rút ra từ vòng 1), `docs/Thiet_ke_du_lieu_da_huong_NLP_N12.docx`.
 
 | Hướng | Nhãn |
 |---|---|
@@ -58,36 +60,37 @@ Quy tắc mới từ đợt rà gold vòng 1, **chưa có trong docx, cần vi�
 ## 4. Đã làm xong
 
 - **Làm sạch** (Colab lần 3, 2026-11-12): regex kết hợp NER NlpHUST, che `[NAME]`, `[USER]`, `[ADDRESS]`, `[URL]`, `[PHONE]`, `[STUDENT_ID]`...; không lọc emoji, từ tục, teencode. Tỷ lệ sót tên ước khoảng 2,7% (đo ở lần 1).
-- **Vòng 1** (240 câu, `gan_nhan/vong1/`): Hảo và Triệu gán độc lập (2026-11-19), κ toxicity 0,647, topic 0,541, stance 0,357, emotion_1 0,364. **Cả 4 người soát chung** trên file `da_chot/tong_hop_vong1_Hao_Trieu_da_chot.xlsx` (2026-11-20). Vì vậy vòng 1 chỉ có κ cặp Hảo–Triệu; κ nhiều người phải lấy từ vòng 2. Không cần ai gán lại vòng 1.
-- **Rà gold vòng 1** (2026-11-24, Claude chốt theo yêu cầu): 95 câu suggest và 44 câu topic = unk có stance, kèm 3 ô trống. Kết quả và lý do từng câu trong `gan_nhan/vong1/ra_soat_suggest_vong1_da_chot.xlsx` và `xem_lai_stance_vong1_da_chot.xlsx`. Gold đã cập nhật tại `gan_nhan/vong1/gold_vong1.csv`, bản cũ là `gold_vong1_truoc_ra_soat.csv`. Stance đổi 90 câu (suggest 95 → 32), topic đổi 22 câu, 0 câu vi phạm ràng buộc, không còn ô trống. Script lưu ở `scripts_ra_soat/` (chỉ để tái lập; chạy lại `ra_soat_suggest.py` sẽ **ghi đè** file đề xuất ban đầu).
+- **Vòng 1** (240 câu, `data/gan_nhan/vong1/`): Hảo và Triệu gán độc lập (2026-11-19), κ toxicity 0,647, topic 0,541, stance 0,357, emotion_1 0,364. **Cả 4 người soát chung** trên file `da_chot/tong_hop_vong1_Hao_Trieu_da_chot.xlsx` (2026-11-20). Vì vậy vòng 1 chỉ có κ cặp Hảo–Triệu; κ nhiều người phải lấy từ vòng 2. Không cần ai gán lại vòng 1.
+- **Rà gold vòng 1** (2026-11-24, Claude chốt theo yêu cầu): 95 câu suggest và 44 câu topic = unk có stance, kèm 3 ô trống. Kết quả và lý do từng câu trong `data/gan_nhan/vong1/ra_soat_suggest_vong1_da_chot.xlsx` và `xem_lai_stance_vong1_da_chot.xlsx`. Gold đã cập nhật tại `data/gan_nhan/vong1/gold_vong1.csv`, bản cũ là `gold_vong1_truoc_ra_soat.csv`. Stance đổi 90 câu (suggest 95 → 32), topic đổi 22 câu, 0 câu vi phạm ràng buộc, không còn ô trống. Script lưu ở `scripts/ra_soat/` (chỉ để tái lập; chạy lại `ra_soat_suggest.py` sẽ **ghi đè** file đề xuất ban đầu).
 - Phân bố gold vòng 1 sau rà: toxicity clean 190 / attack 25 / profane 24 / unk 1; topic academics 81 / unk 58 / student_life 56 / administration 39 / facilities 6; stance none 137 / oppose 33 / suggest 32 / support 23 / unk 15; emotion_1 neutral 139 / joy 29 / sadness 23 / fear 17 / surprise 12 / anger 11 / unk 9.
-- **Vòng 2 đã tạo file** (2026-11-24): `python tao_mau_gan_thu.py 2` → `gan_nhan/vong2/gan_thu_vong2_{Hao,Sinh,Trieu,Long}.xlsx` và `tong_hop_vong2.csv` (nguồn mẫu từng câu). 240 câu train, 229 bài đăng, không trùng vòng 1; 120 ngẫu nhiên + 4 × 30 câu ưu tiên nhãn hiếm (công kích, cơ sở vật chất, tức giận/ngạc nhiên, ủng hộ). Script có `DAU_HIEU_THEO_VONG`; đã kiểm tra chạy lại vòng 1 ra đúng mẫu cũ. Sheet `huong_dan` của file vòng 2 đã nhắc các quy tắc mục 7 và 4 quy tắc mới. **Chưa ai gán.** Đọc lướt thấy nhóm ủng hộ và tức giận/ngạc nhiên lẫn nhiều câu không mang nhãn đó ("xứng đáng độc thân", "tức là"), nên khi báo cáo kết quả theo `nguon_mau` đừng coi 30 câu mỗi nhóm là 30 câu nhãn hiếm; khi làm vòng 3 nên siết lại regex.
+- **Vòng 2 đã tạo file** (2026-11-24): `python scripts/tao_mau_gan_thu.py 2` → `data/gan_nhan/vong2/gan_thu_vong2_{Hao,Sinh,Trieu,Long}.xlsx` và `tong_hop_vong2.csv` (nguồn mẫu từng câu). 240 câu train, 229 bài đăng, không trùng vòng 1; 120 ngẫu nhiên + 4 × 30 câu ưu tiên nhãn hiếm (công kích, cơ sở vật chất, tức giận/ngạc nhiên, ủng hộ). Script có `DAU_HIEU_THEO_VONG`; đã kiểm tra chạy lại vòng 1 ra đúng mẫu cũ. Sheet `huong_dan` của file vòng 2 đã nhắc các quy tắc mục 7 và 4 quy tắc mới. **Chưa ai gán.** Đọc lướt thấy nhóm ủng hộ và tức giận/ngạc nhiên lẫn nhiều câu không mang nhãn đó ("xứng đáng độc thân", "tức là"), nên khi báo cáo kết quả theo `nguon_mau` đừng coi 30 câu mỗi nhóm là 30 câu nhãn hiếm; khi làm vòng 3 nên siết lại regex.
+- **Sắp xếp lại repo** (2026-11-25): `docs/`, `scripts/`, `data/` (đổi tên từ `Datasets_N12_ban_giao/`), `huggingface/`. Đã kiểm tra `scripts/tao_mau_gan_thu.py` ở chỗ mới sinh lại đúng mẫu vòng 1 và vòng 2. Phần giai đoạn cũ đã xóa (xem mục 1).
 
 ## 5. Lộ trình tiếp theo
 
 Thứ tự ưu tiên. Bước 3 chặn mọi bước sau.
 
 1. **Quy chuẩn bản 4**: viết 4 quy tắc mới (mục 3) vào docx, sửa câu chữ mục 5 về câu đùa dưới dạng góp ý. Gửi nhóm trước khi gán vòng 2. Có thể soạn nháp nội dung cho người dùng chép vào (dùng skill docx nếu sửa trực tiếp file).
-2. **Người duyệt nhãn Claude chốt**: một thành viên đọc lướt 2 file `_da_chot` của vòng 1. Câu không đồng ý thì sửa gold (sao lưu trước) và đổi `*_cach_chot`.
-3. **Gán vòng 2 độc lập**: 4 người gán file của mình, xong đặt vào `gan_nhan/vong2/da_gan/`.
+2. **Người duyệt nhãn Claude chốt**: một thành viên đọc lướt 2 file `_da_chot` của vòng 1 (100/240 câu gold có nhãn `ra_soat_claude`). Nên làm sau khi người đó đã nộp file vòng 2, để lý do của Claude không ảnh hưởng việc gán độc lập. Câu không đồng ý thì sửa gold (sao lưu trước) và đổi `*_cach_chot`.
+3. **Gán vòng 2 độc lập**: 4 người gán file của mình, xong đặt vào `data/gan_nhan/vong2/da_gan/`.
 4. **Tổng hợp vòng 2**:
    ```
-   python tong_hop_gan_thu.py gan_nhan/vong2/tong_hop_vong2_4nguoi.xlsx gan_nhan/vong2/da_gan/gan_thu_vong2_Hao.xlsx gan_nhan/vong2/da_gan/gan_thu_vong2_Sinh.xlsx gan_nhan/vong2/da_gan/gan_thu_vong2_Trieu.xlsx gan_nhan/vong2/da_gan/gan_thu_vong2_Long.xlsx
+   python scripts/tong_hop_gan_thu.py data/gan_nhan/vong2/tong_hop_vong2_4nguoi.xlsx data/gan_nhan/vong2/da_gan/gan_thu_vong2_Hao.xlsx data/gan_nhan/vong2/da_gan/gan_thu_vong2_Sinh.xlsx data/gan_nhan/vong2/da_gan/gan_thu_vong2_Trieu.xlsx data/gan_nhan/vong2/da_gan/gan_thu_vong2_Long.xlsx
    ```
    Script tự sửa lỗi gõ nhãn (ghi ở sheet `sua_loi_go`), tính Cohen κ từng cặp và Fleiss κ. Báo cáo thêm: tỷ lệ unk của từng người, lệch có hệ thống giữa các cặp, κ từng nhãn cảm xúc (hoặc Krippendorff α) vì emotion đa nhãn, kết quả tách theo `nguon_mau` (ngẫu nhiên và từng nhóm nhãn hiếm). Kiểm tra ràng buộc topic/stance trên nhãn của từng người.
-5. **Họp chốt vòng 2**: theo đa số 4 người, hòa 2-2 thì nhóm phân xử; ghi lý do vào `ghi_chu_hop`; xuất `gan_nhan/vong2/gold_vong2.csv` cùng cấu trúc với `gold_vong1.csv`.
+5. **Họp chốt vòng 2**: theo đa số 4 người, hòa 2-2 thì nhóm phân xử; ghi lý do vào `ghi_chu_hop`; xuất `data/gan_nhan/vong2/gold_vong2.csv` cùng cấu trúc với `gold_vong1.csv`.
 6. **Quyết định theo κ vòng 2**: hướng nào ≥ 0,67 thì đạt; 0,5–0,67 thì sửa quy chuẩn ở chỗ hay lệch; < 0,5 (dự kiến stance, emotion) thì đơn giản hóa nhãn trước vòng 3 (gộp nhãn cảm xúc, hoặc tách suggest thành hướng riêng). Không gán thêm vòng mãi.
-7. **Vòng 3** (`python tao_mau_gan_thu.py 3`; vòng chưa khai báo trong `DAU_HIEU_THEO_VONG` dùng bộ của vòng mới nhất, nên cập nhật bộ dấu hiệu theo nhãn còn hiếm sau vòng 2). Lặp đến khi đạt ngưỡng. Quy chuẩn cuối cùng thì khóa phiên bản.
+7. **Vòng 3** (`python scripts/tao_mau_gan_thu.py 3`; vòng chưa khai báo trong `DAU_HIEU_THEO_VONG` dùng bộ của vòng mới nhất, nên cập nhật bộ dấu hiệu theo nhãn còn hiếm sau vòng 2). Lặp đến khi đạt ngưỡng. Quy chuẩn cuối cùng thì khóa phiên bản.
 8. **Chạy thử LLM trên gold** (gold các vòng, khoảng 500–700 câu, không phải Test): 2–3 LLM, prompt viết từ quy chuẩn cuối, đầu ra JSON có đủ 5 cột nhãn; đo κ LLM so với gold từng hướng; chỉ sửa prompt dựa trên gold; khóa prompt, ghi phiên bản mô hình và tham số. Lưu ý: gold vòng 1 có khoảng 90 nhãn do Claude chốt, nên nếu đánh giá cả Claude thì ưu tiên gold từ vòng 2.
 9. **Gán toàn bộ**: nhóm quyết định gán cả 136 nghìn câu hay một tập con khoảng 20–30 nghìn câu (chi phí API, khối lượng rà). Nhiều LLM gán, lấy đa số; câu bất đồng hoặc bị đánh dấu thì người phân xử; ghi nguồn gốc nhãn từng dòng. Chạy theo batch, lưu sau mỗi batch.
 10. **Tập Test do người gán**: khoảng 1.500–2.000 câu lấy từ split test theo bài đăng, mỗi câu 2 người, bất đồng thì thêm người thứ 3. Đây là phần tốn công nhất, nên lên lịch sớm.
 11. **Kiểm tra chất lượng**: kiểm tra mù khoảng 5% câu LLM đồng thuận; rà tổ hợp nhãn hiếm (attack + support...); bỏ khỏi train các câu trùng test (cột `cross_split_duplicate` trong `masked.csv`, 9.014 dòng).
 12. **Baseline** (tùy chọn, quyết định khi chọn nơi nộp): BoW, TF-IDF, fastText, PhoBERT, XLM-R cho từng hướng; thêm mô hình có ngữ cảnh bài đăng và bình luận cha; báo Macro-F1, F1 từng nhãn.
-13. **Paper và datasheet**: quy trình thu thập, làm sạch, ẩn danh, quy chuẩn, độ đồng thuận, thống kê, đạo đức, hạn chế. Công bố dạng gated, duyệt thủ công, có kênh yêu cầu gỡ dữ liệu.
+13. **Paper và datasheet**: quy trình thu thập, làm sạch, ẩn danh, quy chuẩn, độ đồng thuận, thống kê, đạo đức, hạn chế. Công bố dạng gated, duyệt thủ công (bật trong Settings của repo HF, mặc định là tự duyệt), có kênh yêu cầu gỡ dữ liệu. Dataset card nháp đã có ở `huggingface/README.md`: điền các mục `TODO` khi có số liệu. Khi định dạng nhãn cuối đã chốt thì viết script xuất (ghép `masked.csv` với nhãn, ghi parquet train/validation/test vào `huggingface/data/`, thư mục này đã bị `.gitignore` chặn) và đẩy lên HF bằng `huggingface_hub`, không qua repo git này.
 
 Làm song song, không chặn việc gán:
 - **Pháp lý, đạo đức (chặn công bố):** hỏi giảng viên về phê duyệt đạo đức; xác định group công khai hay kín (file dữ liệu không có cột group, phải tra danh sách lúc cào); điều khoản Meta (scraper dùng cookie); Luật 91/2025/QH15 (Điều 14, 19) với người có chuyên môn; loại group kín khỏi bản công bố nếu chưa có căn cứ. Không đưa ra kết luận pháp lý thay người có chuyên môn.
-- **Làm sạch còn dở:** kiểm tra 4 câu sót tên Triệu báo ở vòng 1; đọc khoảng 50 dòng `post_text` và 50 dòng `parent_text`; quyết định giữ hay bỏ các dòng cờ spam / ít thông tin; cập nhật mục kết quả trong `Quy_tac_lam_sach_du_lieu_NLP_N12.docx` theo lần chạy 3.
+- **Làm sạch còn dở:** kiểm tra 4 câu sót tên Triệu báo ở vòng 1; đọc khoảng 50 dòng `post_text` và 50 dòng `parent_text`; quyết định giữ hay bỏ các dòng cờ spam / ít thông tin; cập nhật mục kết quả trong `docs/Quy_tac_lam_sach_du_lieu_NLP_N12.docx` theo lần chạy 3.
 - Giai đoạn 1 còn mở: đối chiếu định nghĩa OFFENSIVE, HATE của ViHSD và nhãn UIT-VSMEC với bài báo gốc.
 
 ## 6. Bản đồ file chính
@@ -95,23 +98,26 @@ Làm song song, không chặn việc gán:
 | File | Vai trò |
 |---|---|
 | `TIEN_TRINH_DATASET.md` | Tiến trình chi tiết, checklist, nhật ký. Cập nhật sau mỗi bước |
-| `Quy_chuan_gan_nhan_4_huong_NLP_N12.docx` | Quy chuẩn gán nhãn (bản nháp 3) |
-| `Thiet_ke_du_lieu_da_huong_NLP_N12.docx` | Thiết kế 4 hướng, so sánh UIT-VSFC, UIT-VSMEC, ViHSD |
-| `Quy_tac_lam_sach_du_lieu_NLP_N12.docx`, `clean_dataset.py` | Quy trình và script làm sạch |
-| `cleaned/masked.csv` | Dataset đã che, cột chính: `comment_uid`, `post_uid`, `parent_uid`, `comment_type`, `text_public`, `post_text`, `parent_text`, `split`, `is_low_info`, `is_spam_candidate`, `parent_missing`, `post_missing`, `cross_split_duplicate` |
-| `tao_mau_gan_thu.py [vòng]` | Tạo file gán thử, không lấy lại câu các vòng trước |
-| `tong_hop_gan_thu.py <out.xlsx> <file>...` | Tổng hợp, κ, Fleiss κ |
-| `gan_nhan/vong1/gold_vong1.csv` | Gold vòng 1 sau rà (240 câu) |
-| `gan_nhan/vong1/*_da_chot.xlsx` | Nhãn và lý do đợt rà gold vòng 1 |
-| `gan_nhan/vong2/` | File gán vòng 2, chờ gán |
-| `scripts_ra_soat/` | Script đợt rà gold vòng 1 và `docx2txt.py` |
-| `Bao_cao_tien_do_NLP_N12.docx` | Báo cáo giai đoạn Toxic nhị phân cũ (E1–E8), chỉ để tham khảo |
+| `docs/` | Tài liệu `.docx`: quy chuẩn, thiết kế, quy tắc làm sạch, kế hoạch tiếp theo cho nhóm (`Ke_hoach_tiep_theo_NLP_N12.docx`, 25/11, có 26 điểm còn vướng) |
+| `scripts/` | Toàn bộ code; chạy từ thư mục gốc repo |
+| `data/` | Dữ liệu nhận riêng (`cleaned/`, `gan_nhan/`), không commit |
+| `huggingface/README.md` | Dataset card nháp để công bố trên Hugging Face |
+| `docs/Quy_chuan_gan_nhan_4_huong_NLP_N12.docx` | Quy chuẩn gán nhãn (bản nháp 3) |
+| `docs/Thiet_ke_du_lieu_da_huong_NLP_N12.docx` | Thiết kế 4 hướng, so sánh UIT-VSFC, UIT-VSMEC, ViHSD |
+| `docs/Quy_tac_lam_sach_du_lieu_NLP_N12.docx`, `scripts/clean_dataset.py` | Quy trình và script làm sạch |
+| `data/cleaned/masked.csv` | Dataset đã che, 16 cột: `post_uid`, `comment_uid`, `parent_uid`, `comment_type`, `post_text`, `parent_text`, `text_public`, `split`, `data_status`, `pii_types`, `is_low_info`, `is_spam_candidate`, `post_is_ad_candidate`, `parent_missing`, `post_missing`, `cross_split_duplicate` |
+| `scripts/tao_mau_gan_thu.py [vòng]` | Tạo file gán thử, không lấy lại câu các vòng trước |
+| `scripts/tong_hop_gan_thu.py <out.xlsx> <file>...` | Tổng hợp, κ, Fleiss κ |
+| `data/gan_nhan/vong1/gold_vong1.csv` | Gold vòng 1 sau rà (240 câu) |
+| `data/gan_nhan/vong1/*_da_chot.xlsx` | Nhãn và lý do đợt rà gold vòng 1 |
+| `data/gan_nhan/vong2/` | File gán vòng 2, chờ gán |
+| `scripts/ra_soat/` | Script đợt rà gold vòng 1 và `docx2txt.py` |
 
 ## 7. Cách trả lời người dùng
 
-- Khi được hỏi "làm gì tiếp": đọc TIEN_TRINH, kiểm tra trạng thái thật của file (ví dụ thư mục `da_gan/` đã có file chưa, cột nhãn đã điền chưa) rồi mới trả lời. Lệnh kiểm tra nhanh vòng 2 (chạy trong `BTL1`):
+- Khi được hỏi "làm gì tiếp": đọc TIEN_TRINH, kiểm tra trạng thái thật của file (ví dụ thư mục `da_gan/` đã có file chưa, cột nhãn đã điền chưa) rồi mới trả lời. Lệnh kiểm tra nhanh vòng 2 (chạy từ thư mục gốc repo):
   ```
-  PYTHONIOENCODING=utf-8 python -c "import pandas as pd, glob; [print(f, pd.read_excel(f, sheet_name='gan_nhan')[['toxicity','topic','stance','emotion_1']].notna().sum().to_dict()) for f in sorted(glob.glob('gan_nhan/vong2/**/gan_thu_vong2_*.xlsx', recursive=True))]"
+  PYTHONIOENCODING=utf-8 python -c "import pandas as pd, glob; [print(f, pd.read_excel(f, sheet_name='gan_nhan')[['toxicity','topic','stance','emotion_1']].notna().sum().to_dict()) for f in sorted(glob.glob('data/gan_nhan/vong2/**/gan_thu_vong2_*.xlsx', recursive=True))]"
   ```
 - Người dùng có thể giao Claude tự chốt nhãn thay nhóm (đã làm ở vòng 1). Khi đó vẫn ghi lý do từng câu, ghi `ra_soat_claude` ở `*_cach_chot`, sao lưu gold, và nhắc rằng cần một người duyệt lại để paper khai báo đúng.
 - Trình bày theo kiểu ngắn gọn, có bảng số liệu trước/sau khi sửa nhãn; người dùng thích nhận file Excel để tự soát (gửi file bằng SendUserFile nếu có).

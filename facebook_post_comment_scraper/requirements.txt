@@ -1,4 +1,0 @@
-requests
-PyQt6
-python-dotenv
-seleniumbase

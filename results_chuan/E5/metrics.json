@@ -1,0 +1,71 @@
+{
+  "experiment": "E5",
+  "model": "fastText + GaussianNB",
+  "seed": 42,
+  "fasttext": {
+    "model": "skipgram",
+    "dim": 100,
+    "epoch": 25,
+    "lr": 0.05,
+    "minn": 2,
+    "maxn": 5,
+    "minCount": 5,
+    "thread": 1
+  },
+  "pooling": "mean_max",
+  "params": {
+    "var_smoothing": 0.1
+  },
+  "threshold": 0.95,
+  "vector_hash": "4c40d1da3f62f0ab",
+  "metrics": {
+    "Train": {
+      "toxic_precision": 0.5581395348837209,
+      "toxic_recall": 0.7941760423560555,
+      "toxic_f1": 0.6555585905490303,
+      "macro_f1": 0.7664645038712281,
+      "accuracy": 0.8191336775674125,
+      "pr_auc": 0.6867140966855879,
+      "tn": 4511,
+      "fp": 950,
+      "fn": 311,
+      "tp": 1200
+    },
+    "Validation": {
+      "toxic_precision": 0.5675675675675675,
+      "toxic_recall": 0.7777777777777778,
+      "toxic_f1": 0.65625,
+      "macro_f1": 0.7687190594059405,
+      "accuracy": 0.8234113712374582,
+      "pr_auc": 0.6845644445403514,
+      "tn": 979,
+      "fp": 192,
+      "fn": 72,
+      "tp": 252
+    },
+    "Lớp phổ biến nhất (Validation)": {
+      "toxic_precision": 0.0,
+      "toxic_recall": 0.0,
+      "toxic_f1": 0.0,
+      "macro_f1": 0.4392348087021755,
+      "accuracy": 0.7832775919732441,
+      "pr_auc": 0.21672240802675585,
+      "tn": 1171,
+      "fp": 0,
+      "fn": 324,
+      "tp": 0
+    },
+    "Test": {
+      "toxic_precision": 0.5543478260869565,
+      "toxic_recall": 0.7870370370370371,
+      "toxic_f1": 0.6505102040816326,
+      "macro_f1": 0.7631517475530556,
+      "accuracy": 0.8167224080267559,
+      "pr_auc": 0.6477587168816199,
+      "tn": 966,
+      "fp": 205,
+      "fn": 69,
+      "tp": 255
+    }
+  }
+}

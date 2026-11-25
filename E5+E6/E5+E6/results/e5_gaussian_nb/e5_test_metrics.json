@@ -1,0 +1,17 @@
+{
+  "toxic_f1": 0.681,
+  "toxic_recall": 0.7346,
+  "toxic_precision": 0.6347,
+  "macro_f1": 0.7918,
+  "accuracy": 0.8508,
+  "pr_auc": 0.7246,
+  "confusion_matrix": {
+    "TP": 238,
+    "TN": 1034,
+    "FP": 137,
+    "FN": 86
+  },
+  "total_samples": 1495,
+  "toxic_samples": 324,
+  "non_toxic_samples": 1171
+}

@@ -1,0 +1,536 @@
+KẾ HOẠCH THỰC HIỆN ĐỀ TÀI NLP_N12 — PHIÊN BẢN 2.0
+Phân loại bình luận sinh viên PTIT thành Toxic và Non-toxic có sử dụng ngữ cảnh
+I. Những điểm thay đổi so với kế hoạch ban đầu
+Nội dung	Điều chỉnh đã thống nhất
+Dữ liệu	Sử dụng phiên bản dữ liệu sạch hiện tại, đối chiếu lại số lượng với dữ liệu gốc
+Emoji	Giữ nguyên emoji trong bộ dữ liệu chính
+Stopwords	Không loại bỏ từ dừng
+Ngữ cảnh	Làm sạch riêng post_message và parent_message
+Tách từ	VnCoreNLP cho các nhánh cần tách từ tiếng Việt; XLM-R dùng tokenizer riêng
+Gán nhãn	Chatbot/LLM gán nhãn tự động theo quy chuẩn NLP_N12 v2.0
+Định nghĩa Toxic	Bao gồm cả xúc phạm nhẹ, khinh miệt, chế giễu và công kích gián tiếp
+Chất lượng nhãn	Có tập chuẩn do con người gán độc lập và cơ chế rà soát
+Mất cân bằng	Không ép tỷ lệ 50/50; xử lý trong lấy mẫu Train và huấn luyện
+Chia tập	70/15/15 theo post_id
+Mô hình	Giữ 8 Comment-only và 2 Context-aware
+Đánh giá	Toxic F1 là chính; bổ sung phân tích theo mức độ phụ thuộc ngữ cảnh
+
+II. Mục tiêu nghiên cứu
+Xây dựng và đánh giá hệ thống phân loại bình luận tiếng Việt của sinh viên PTIT thành hai lớp Toxic và Non-toxic, đồng thời xác định mức độ cải thiện khi bổ sung thông tin bài đăng và bình luận cha.
+
+Đề tài tập trung vào bốn mục tiêu:
+1. Xây dựng bộ dữ liệu bình luận tiếng Việt được làm sạch đồng nhất, bảo toàn emoji, từ phủ định, tiếng lóng và thông tin ngữ cảnh.
+2. Xây dựng hệ thống gán nhãn tự động bằng chatbot/LLM theo bộ quy chuẩn có thể kiểm định, kết hợp rà soát và xác nhận nhãn bởi con người.
+3. So sánh BoW, TF-IDF, fastText, PhoBERT và XLM-RoBERTa trong bài toán phân loại Toxic/Non-toxic.
+4. Đo lường ảnh hưởng của post_message và parent_message, đặc biệt đối với bình luận ngắn, mỉa mai hoặc có nhãn phụ thuộc ngữ cảnh.
+Câu hỏi nghiên cứu
+- RQ1: Trong các phương pháp biểu diễn BoW, TF-IDF và fastText, phương pháp nào đạt hiệu quả tốt hơn khi kết hợp với Naive Bayes và SVM?
+- RQ2: PhoBERT và XLM-RoBERTa có hiệu quả như thế nào so với các mô hình truyền thống?
+- RQ3: Bổ sung ngữ cảnh có cải thiện Toxic F1 và Recall Toxic không?
+- RQ4: Bài đăng và bình luận cha đóng góp như thế nào vào hiệu quả phân loại?
+- RQ5: Các dạng bình luận nào thường gây lỗi cho hệ thống gán nhãn tự động và mô hình phân loại?
+
+III. Phạm vi và dữ liệu
+1. Nguồn dữ liệu
+Nguồn dữ liệu là tập bình luận sinh viên PTIT đã được tổng hợp từ các bài đăng và chuỗi thảo luận.
+
+Theo các bước xử lý đã thực hiện trong dự án, phiên bản dữ liệu sạch gần nhất có:
+141.276
+Bình luận sau lọc rỗng
+
+
+2
+Nhãn phân loại cuối cùng
+
+
+10
+Cấu hình thí nghiệm chính
+
+
+
+Số lượng 141.276 là số liệu của phiên bản làm sạch đã được trao đổi trước đó, chưa phải số liệu được kiểm tra lại từ tệp nguồn trong lượt này. Trước khi báo cáo chính thức cần xác nhận số dòng, số bài đăng, số bình luận reply và số mẫu có ngữ cảnh thiếu.
+
+Không dùng lại số 150.280 trong kế hoạch cũ làm số liệu hiện tại nếu chưa xác minh nguồn gốc.
+2. Nguyên tắc quản lý dữ liệu
+- Giữ nguyên bản dữ liệu gốc.
+- Không xóa bình luận chỉ vì có từ tục, emoji hoặc nội dung ngắn.
+- Không xóa các bình luận trùng văn bản nhưng khác post_id, comment_id hoặc ngữ cảnh.
+- Không tự tạo bình luận cha khi thiếu dữ liệu.
+- Không thay đổi nhãn để cân bằng tỷ lệ hai lớp.
+- Lưu lại phiên bản dữ liệu, quy tắc tiền xử lý và nhật ký thay đổi.
+
+IV. Quy trình thực hiện tổng thể
+01
+
+Kiểm tra và làm sạch ba trường văn bản
+
+
+
+02
+
+Xác minh liên kết ngữ cảnh
+
+
+
+03
+
+Xây dựng và kiểm định quy chuẩn gán nhãn
+
+
+
+04
+
+Chia dữ liệu và khóa tập Test
+
+
+
+05
+
+Gán nhãn tự động có kiểm soát
+
+
+
+06
+
+Tách từ và tạo đặc trưng cho từng mô hình
+
+
+
+07
+
+Huấn luyện E1–E10
+
+
+
+08
+
+Đánh giá, phân tích lỗi và báo cáo
+
+
+
+
+Điểm thay đổi về thứ tự: Tập Test chuẩn phải được xác lập trước khi dùng kết quả Test để hiệu chỉnh chatbot hoặc mô hình. Có thể chia nhóm bài đăng trước, sau đó gán nhãn theo quy trình phù hợp từng tập. Không dùng nhãn Test để sửa prompt sau khi đã khóa quy trình đánh giá.
+
+V. Nội dung thực hiện chi tiết
+Giai đoạn 1 — Kiểm tra và làm sạch dữ liệu
+Mục tiêu
+Tạo ba trường văn bản sạch, đồng nhất về cách xử lý nhưng vẫn giữ các tín hiệu cần thiết cho Toxic Detection.
+Các trường chính
+Trường nguồn	Trường sau xử lý
+message_original	message_clean
+post_message	post_clean
+parent_message	parent_clean
+
+Quy tắc tiền xử lý
+Thao tác	Quyết định
+Chuẩn hóa Unicode NFC	Thực hiện
+Chuẩn hóa khoảng trắng	Thực hiện
+Xử lý HTML và ký tự điều khiển	Thực hiện
+Chuẩn hóa URL	Thay bằng marker thống nhất khi cần
+Xóa emoji	Không
+Xóa stopwords	Không
+Xóa từ tục	Không
+Xóa từ phủ định	Không
+Xóa tiếng lóng/teencode	Không
+Xóa dấu câu hàng loạt	Không
+Xóa bình luận trùng nội dung	Không mặc định
+Tách từ ngay trên dữ liệu gốc	Không; tạo cột riêng sau
+
+Công việc
+1. Kiểm tra số lượng và cấu trúc dữ liệu.
+2. Kiểm tra các bản ghi có message_clean rỗng.
+3. Làm sạch post_message thành post_clean.
+4. Làm sạch parent_message thành parent_clean.
+5. Xác minh tính nhất quán giữa ba trường.
+6. Kiểm tra URL, HTML, emoji, tiếng lóng và dữ liệu lỗi.
+7. Lưu nhật ký số lượng bản ghi trước và sau xử lý.
+Sản phẩm: Bộ dữ liệu sạch có message_clean, post_clean, parent_clean, giữ các trường gốc để đối chiếu.
+Giai đoạn 2 — Kiểm chứng ngữ cảnh
+Mục tiêu
+Đảm bảo mỗi bình luận mục tiêu được liên kết đúng với bài đăng và bình luận cha.
+Công việc
+- Kiểm tra tính duy nhất của (post_id, comment_id).
+- Xác minh parent_comment_id có liên kết đúng bình luận cha.
+- Kiểm tra sự phù hợp giữa parent_message và bình luận được liên kết.
+- Phân biệt top-level với reply.
+- Phân biệt reply có bình luận cha với reply bị thiếu nội dung cha.
+- Đánh dấu các liên kết không xác minh được.
+- Không sử dụng bình luận xuất hiện sau bình luận mục tiêu làm ngữ cảnh chính.
+Trạng thái ngữ cảnh
+Trạng thái	Ý nghĩa
+complete	Ngữ cảnh cần thiết có sẵn và liên kết hợp lệ
+no_parent	Bình luận top-level, không có bình luận cha
+parent_missing	Reply nhưng thiếu nội dung bình luận cha
+post_missing	Thiếu nội dung bài đăng
+unverified	Quan hệ ngữ cảnh chưa được xác minh
+
+Nếu đồng thời thiếu bài đăng và bình luận cha, cần lưu hai cờ thiếu riêng, thay vì buộc một trạng thái duy nhất.
+
+Sản phẩm: Bộ dữ liệu có ngữ cảnh và báo cáo chất lượng liên kết.
+Giai đoạn 3 — Hoàn thiện quy chuẩn và kiểm định chatbot gán nhãn
+Mục tiêu
+Xây dựng bộ nhãn đáng tin cậy bằng phương pháp gán nhãn tự động có kiểm soát.
+Quy chuẩn áp dụng
+Sử dụng NLP_N12 Toxic Annotation Policy v2.0 đã thảo luận, với các nguyên tắc:
+- Toxic bao gồm xúc phạm nhẹ, khinh miệt, hạ nhục, chế giễu ác ý, chửi bới, đe dọa, quấy rối và công kích gián tiếp.
+- Không yêu cầu phải có tên người bị công kích nếu đối tượng có thể xác định từ ngữ cảnh.
+- Không yêu cầu chứng minh ý định chủ quan của người viết.
+- Không coi mọi từ tục hoặc emoji là Toxic.
+- Không coi phê bình nhà trường, giảng viên hoặc chính sách là Toxic nếu không có hành vi công kích theo quy chuẩn.
+- Bình luận cha và bài đăng chỉ hỗ trợ diễn giải.
+- Cho phép trạng thái review khi không đủ bằng chứng.
+Quy trình kiểm định
+Bước 1 — Tạo tập chuẩn ban đầu. Lấy 500–1.000 bình luận, gồm mẫu ngẫu nhiên và mẫu có khả năng Toxic cao, bảo đảm có đủ bình luận top-level, reply, emoji, mỉa mai, tiếng lóng và ngữ cảnh thiếu.
+
+Bước 2 — Hai người gán nhãn độc lập. Tính Cohen's Kappa, tỷ lệ đồng thuận và phân tích bất đồng.
+
+Bước 3 — Phân xử và khóa quy chuẩn. Thống nhất nhãn, chỉnh sửa các quy tắc gây bất đồng, lưu phiên bản quy chuẩn.
+
+Bước 4 — Kiểm thử chatbot. Chạy chatbot trên tập chuẩn phát triển, tính Precision, Recall, F1 Toxic và tỷ lệ Review.
+
+Bước 5 — Phân tích lỗi. Tập trung vào false negative của Toxic, nhưng đồng thời kiểm soát false positive.
+
+Bước 6 — Khóa prompt và cấu hình chatbot. Ghi lại phiên bản mô hình, prompt, tham số sinh, JSON schema và quy tắc xử lý lỗi.
+
+Không được sửa prompt dựa trên kết quả của tập Test đã khóa.
+
+Sản phẩm: Quy chuẩn gán nhãn chính thức, prompt có phiên bản, tập chuẩn con người và báo cáo chất lượng chatbot.
+Giai đoạn 4 — Chia dữ liệu và khóa tập Test
+Mục tiêu
+Ngăn rò rỉ dữ liệu giữa Train, Validation và Test.
+Tập	Tỷ lệ dự kiến	Chức năng
+Train	70%	Huấn luyện
+Validation	15%	Chọn tham số và checkpoint
+Test	15%	Đánh giá cuối cùng
+
+Nguyên tắc
+- Chia theo post_id, không chia ngẫu nhiên theo bình luận.
+- Không để cùng một bài đăng xuất hiện ở nhiều tập.
+- Cố gắng duy trì phân bố nhãn, đồng thời ưu tiên bảo toàn nhóm.
+- Cố định seed 42 và lưu danh sách ID.
+- Không dùng Test để chọn prompt, mô hình hoặc tham số.
+- Kiểm tra trùng và gần trùng xuyên tập.
+- Nếu có lấy mẫu bổ sung Toxic, chỉ thực hiện trên Train hoặc tập phát triển được phép sử dụng.
+Điểm quan trọng: Nếu chỉ có khả năng gán nhãn thủ công cho một phần dữ liệu, tập Test cần được thiết kế và gán nhãn bởi con người theo cách phản ánh đúng phân bố dữ liệu mục tiêu. Không nhất thiết phải gán nhãn thủ công toàn bộ 15% của 141.276 bình luận.
+
+Sản phẩm: Danh sách nhóm bài đăng thuộc Train/Validation/Test, tập Test chuẩn và báo cáo phân bố dữ liệu.
+Giai đoạn 5 — Gán nhãn tự động trên dữ liệu chính
+Mục tiêu
+Tạo bộ dữ liệu có nhãn Toxic/Non-toxic bằng chatbot, có thể truy vết quyết định và kiểm soát sai sót.
+Đầu vào chatbot
+Mỗi yêu cầu gán nhãn chứa:
+{
+  "post_id": "POST_001",
+  "comment_id": "COMMENT_001",
+  "comment_type": "reply",
+  "post_message": "Mọi người thấy đề thi hôm nay thế nào?",
+  "parent_message": "Đề khó quá",
+  "message_clean": "Chuẩn luôn"
+}
+
+
+Trong triển khai chính thức, sử dụng post_clean và parent_clean thay cho văn bản ngữ cảnh chưa làm sạch. post_id và comment_id chỉ để truy vết, không dùng làm bằng chứng xác định Toxic.
+Đầu ra chatbot
+Tối thiểu cần có:
+Trường	Mục đích
+label_llm	Nhãn tự động 0/1 hoặc null
+annotation_status	final hoặc review
+severity	Mức độ 0–3 hoặc null
+toxic_categories	Mã hành vi Toxic
+confidence	Mức tự đánh giá high/medium/low
+context_required	Có cần ngữ cảnh để xác định nhãn không
+context_used	Trường ngữ cảnh đã sử dụng
+annotation_reason	Giải thích ngắn
+review_reason	Lý do cần rà soát
+prompt_version	Phiên bản quy chuẩn/prompt
+llm_model_version	Mô hình chatbot sử dụng
+
+Quy trình thực hiện
+1. Gán nhãn theo từng batch, có kiểm tra định dạng JSON và lỗi phản hồi.
+2. Lưu kết quả sau từng batch để tránh phải chạy lại toàn bộ.
+3. Rà soát các mẫu chatbot đánh dấu review.
+4. Lấy mẫu ngẫu nhiên trong nhóm chatbot đã gán final để phát hiện lỗi tự tin nhưng sai.
+5. Ưu tiên kiểm tra những trường hợp dễ bị bỏ sót Toxic: công kích không có từ tục, mỉa mai, lời nói ngắn, tiếng lóng và emoji.
+6. Phân xử các nhãn bất đồng với tập chuẩn của con người.
+7. Tạo label_final chỉ cho những mẫu đã đạt điều kiện chấp nhận.
+Xử lý mất cân bằng nhãn
+Không sửa quy tắc chỉ để làm tăng số mẫu Toxic.
+
+Nếu Toxic ít, có thể áp dụng các biện pháp sau trong Train:
+- Lấy mẫu bổ sung các bình luận có khả năng Toxic để con người hoặc chatbot kiểm tra.
+- Dùng class_weight đối với SVM và các mô hình hỗ trợ.
+- Thử weighted loss hoặc các phương pháp lấy mẫu đối với Transformer.
+- Chọn ngưỡng dự đoán bằng Validation nếu mô hình có điểm số phù hợp.
+Tập Test phải giữ phân bố tự nhiên của phạm vi nghiên cứu. Nếu tạo thêm tập Test giàu Toxic để phân tích, phải báo cáo riêng.
+Kiểm soát chất lượng nhãn tự động
+Tôi đề xuất phân biệt:
+Loại nhãn	Ý nghĩa
+llm_only	Chỉ được chatbot gán
+human_verified	Đã được người kiểm tra
+human_adjudicated	Đã phân xử bất đồng
+unresolved	Chưa đủ điều kiện sử dụng
+
+Không gọi toàn bộ dữ liệu do chatbot gán là ground truth theo nghĩa đã được con người xác nhận. Trong báo cáo cần ghi rõ phương pháp tạo nhãn và tỷ lệ nhãn được kiểm chứng.
+
+Sản phẩm: Bộ dữ liệu đã gán nhãn tự động, nhật ký gán nhãn, tập mẫu đã kiểm chứng và báo cáo chất lượng.
+
+Giai đoạn 6 — Tách từ và trích xuất đặc trưng
+Mục tiêu
+Chuẩn bị đầu vào đúng cho từng mô hình mà không làm mất thông tin Toxic.
+Hai nhánh tiền xử lý
+message_clean · parent_clean · post_clean
+
+Nhánh A — Tách từ tiếng Việt
+
+VnCoreNLP
+
+BoW, TF-IDF, fastText, PhoBERT
+
+
+Nhánh B — Văn bản sạch
+
+Tokenizer XLM-R
+
+XLM-RoBERTa
+
+
+
+
+Các cột cần tạo
+Cột	Nội dung
+message_segmented	Bình luận đã tách từ
+parent_segmented	Bình luận cha đã tách từ
+post_segmented	Bài đăng đã tách từ
+
+Các cột này được tạo từ văn bản sạch, không ghi đè lên các cột sạch.
+Phương pháp biểu diễn
+BoW: Sử dụng CountVectorizer, khảo sát word unigram và bigram. Có thể bổ sung character n-grams cho tiếng lóng, từ tục viết biến thể và lỗi chính tả.
+
+TF-IDF: Sử dụng TfidfVectorizer, khảo sát n-grams và giới hạn số đặc trưng. Từ vựng và IDF chỉ được học trên Train.
+
+fastText: Sử dụng vector từ tiếng Việt tiền huấn luyện, lấy trung bình vector từ làm biểu diễn cơ sở. Nếu sử dụng trọng số TF-IDF thì trọng số được học từ Train.
+
+PhoBERT: Sử dụng văn bản đã tách từ phù hợp với checkpoint PhoBERT được chọn.
+
+XLM-RoBERTa: Sử dụng văn bản sạch với tokenizer SentencePiece của mô hình; không ép các từ ghép bằng dấu gạch dưới.
+Lưu ý riêng về emoji
+Không xóa emoji ở bất kỳ nhánh dữ liệu chính nào.
+
+Tuy nhiên, cần kiểm tra cách từng vectorizer/tokenizer biểu diễn emoji. Với BoW và TF-IDF, tokenizer mặc định có thể bỏ qua emoji. Vì vậy, cần cấu hình tokenizer phù hợp hoặc ánh xạ emoji sang token riêng một cách nhất quán, thay vì mặc định rằng emoji đã được đưa vào vector.
+
+Sản phẩm: Ba cột văn bản tách từ và các pipeline đặc trưng có thể tái lập.
+
+Giai đoạn 7 — Huấn luyện 10 cấu hình thí nghiệm
+7.1. Tám cấu hình Comment-only
+Các mô hình này chỉ sử dụng bình luận mục tiêu.
+Mã	Biểu diễn	Mô hình	Đầu vào
+E1	BoW	MultinomialNB	message_segmented
+E2	BoW	Linear SVM	message_segmented
+E3	TF-IDF	MultinomialNB	message_segmented
+E4	TF-IDF	Linear SVM	message_segmented
+E5	fastText	GaussianNB	message_segmented
+E6	fastText	Linear SVM	message_segmented
+E7	PhoBERT	Classification head	message_segmented
+E8	XLM-RoBERTa	Classification head	message_clean
+
+Với E5, GaussianNB được dùng vì embedding có thể chứa giá trị âm, không phù hợp với giả định đầu vào không âm của MultinomialNB.
+7.2. Hai cấu hình Context-aware
+Mã	Mô hình	Đầu vào
+E9	TF-IDF + Linear SVM	post_segmented, parent_segmented, message_segmented
+E10	PhoBERT + Classification head	post_segmented, parent_segmented, message_segmented
+
+E9 — TF-IDF + SVM có ngữ cảnh
+
+Vector hóa ba trường riêng biệt rồi ghép vector theo thứ tự cố định:
+\[
+X=[X_{\text{post}}\ ;\ X_{\text{parent}}\ ;\ X_{\text{comment}}]
+\]
+
+Cách này giúp mô hình phân biệt từ xuất hiện ở bài đăng, bình luận cha và bình luận mục tiêu.
+
+E10 — PhoBERT có ngữ cảnh
+
+Định dạng đầu vào đề xuất:
+POST: [nội dung bài đăng đã tách từ]
+PARENT: [nội dung bình luận cha đã tách từ]
+COMMENT: [nội dung bình luận mục tiêu đã tách từ]
+
+
+Khi thiếu ngữ cảnh, sử dụng marker nhất quán để phân biệt NO_PARENT, PARENT_MISSING và POST_MISSING.
+
+Khi vượt giới hạn token của checkpoint, ưu tiên giữ bình luận mục tiêu, sau đó phân bổ dung lượng cho bình luận cha và bài đăng. Cần xác định ngân sách token trên Train/Validation trước khi đánh giá Test.
+7.3. Các so sánh chính
+Không ngữ cảnh
+
+E4
+
+TF-IDF + SVM
+
+
+Có ngữ cảnh
+
+E9
+
+TF-IDF + SVM
+
+
+
+ΔF1 Toxic = F1(E9) − F1(E4)
+
+
+Không ngữ cảnh
+
+E7
+
+PhoBERT
+
+
+Có ngữ cảnh
+
+E10
+
+PhoBERT
+
+
+
+ΔF1 Toxic = F1(E10) − F1(E7)
+
+
+Các cặp phải sử dụng cùng danh sách mẫu, nhãn và tập Test. Ngoài khác biệt về ngữ cảnh, nên giữ các điều kiện huấn luyện tương đương trong từng cặp để hạn chế yếu tố gây nhiễu.
+7.4. Huấn luyện và chọn tham số
+Đối với mô hình truyền thống:
+- Naive Bayes: alpha hoặc var_smoothing.
+- SVM: C, class_weight.
+- Vectorizer: ngram_range, min_df, max_features.
+Đối với Transformer:
+- Learning rate.
+- Batch size.
+- Số epoch.
+- Độ dài đầu vào.
+- Weighted loss nếu cần.
+- Early stopping theo Validation.
+Sử dụng F1 Toxic trên Validation làm chỉ số chọn mô hình chính, kết hợp kiểm tra Macro-F1 và Recall Toxic.
+
+Bổ sung mô hình dự đoán lớp phổ biến nhất làm baseline tham chiếu, không tính vào 10 cấu hình chính.
+
+Sản phẩm: Mười cấu hình mô hình, checkpoint, tham số và nhật ký huấn luyện.
+Giai đoạn 8 — Đánh giá, phân tích lỗi và hoàn thiện báo cáo
+8.1. Chỉ số đánh giá
+Chỉ số	Vai trò
+Toxic Precision	Kiểm soát dự đoán nhầm Non-toxic thành Toxic
+Toxic Recall	Đo khả năng phát hiện Toxic
+Toxic F1	Chỉ số đánh giá chính
+Macro-F1	Đánh giá cả hai lớp khi dữ liệu mất cân bằng
+Accuracy	Chỉ số tham khảo
+Confusion Matrix	Phân tích FP và FN
+PR-AUC	Bổ sung khi mô hình có điểm số dự đoán phù hợp
+
+Với các cặp E4–E9 và E7–E10, nên ước lượng khoảng tin cậy của chênh lệch F1 bằng bootstrap theo nhóm post_id để tính đến sự phụ thuộc giữa các bình luận cùng bài đăng.
+8.2. Phân tích lỗi theo nhóm
+Cần phân tích ít nhất các nhóm sau:
+Nhóm	Câu hỏi phân tích
+Từ tục không công kích	Mô hình có dự đoán Toxic quá mức không?
+Công kích không chứa từ tục	Mô hình có bỏ sót không?
+Toxic mức nhẹ	Mô hình có nhận ra khinh miệt, chế giễu không?
+Mỉa mai	Ngữ cảnh có giúp phân biệt sắc thái không?
+Emoji	Mô hình có khai thác được emoji không?
+Bình luận ngắn	Mô hình có cần bình luận cha không?
+Văn bản trùng, ngữ cảnh khác	Mô hình có phân biệt được nhãn không?
+Ngữ cảnh thiếu	Hiệu quả suy giảm đến mức nào?
+Văn bản dài	Việc cắt token có làm mất thông tin không?
+
+8.3. Thí nghiệm bổ sung về vai trò ngữ cảnh
+Nếu đủ thời gian và tài nguyên, thực hiện ablation cho E9 và E10:
+Cấu hình	Bình luận	Bài đăng	Bình luận cha
+Comment-only	Có	Không	Không
+Comment + Post	Có	Có	Không
+Comment + Parent	Có	Không	Có
+Full Context	Có	Có	Có
+
+Đây là thí nghiệm bổ sung, không thay thế 10 cấu hình chính.
+
+Một điểm quan trọng là chỉ số context_required do chatbot tự báo không đủ để kết luận một bình luận thực sự phụ thuộc ngữ cảnh. Cần xây dựng tập con đã được con người kiểm chứng, có các ví dụ cùng bình luận nhưng khác ngữ cảnh dẫn đến nhãn khác nhau.
+8.4. Giới hạn và cách diễn giải kết quả
+Báo cáo phải nêu rõ:
+- Một phần nhãn Train được tạo tự động bằng chatbot.
+- Chatbot có thể mắc lỗi có hệ thống.
+- Comment-only có thể không phân biệt được những trường hợp chỉ khác ngữ cảnh.
+- Context-aware cũng có thể sai nếu ngữ cảnh không đầy đủ hoặc liên kết không chính xác.
+- Tỷ lệ Toxic thấp không tự chứng minh quy chuẩn sai.
+- Không được kết luận ngữ cảnh cải thiện hiệu quả nếu chưa có kết quả thực nghiệm hỗ trợ.
+Sản phẩm: Bảng kết quả E1–E10, ma trận nhầm lẫn, so sánh theo cặp, phân tích lỗi và báo cáo khoa học.
+
+VI. Tiến độ triển khai cập nhật
+Kế hoạch cũ dự kiến 18 ngày. Do bổ sung gán nhãn tự động có kiểm định, tập chuẩn con người và làm sạch ngữ cảnh, tôi đề xuất khoảng 21–28 ngày, tùy GPU, tốc độ chatbot và nhân lực rà soát.
+Thời gian	Công việc	Kết quả
+Ngày 1–3	Kiểm tra dữ liệu, làm sạch ba trường	Dữ liệu sạch và nhật ký xử lý
+Ngày 4–5	Kiểm chứng ngữ cảnh	Báo cáo liên kết cha–con
+Ngày 6–8	Gán thử, phân xử, hiệu chỉnh chatbot	Quy chuẩn và prompt đã khóa
+Ngày 9–10	Chia nhóm dữ liệu, thiết kế tập Test chuẩn	Danh sách ID cố định
+Ngày 11–15	Gán nhãn tự động, rà soát, xác nhận Test	Dữ liệu có nhãn
+Ngày 16–18	Tách từ, BoW, TF-IDF, fastText, E1–E6	Baseline truyền thống
+Ngày 19–22	Fine-tune E7–E8	Baseline Transformer
+Ngày 23–25	Huấn luyện E9–E10, ablation nếu có	Kết quả ngữ cảnh
+Ngày 26–28	Đánh giá, phân tích lỗi, viết báo cáo	Sản phẩm cuối
+
+Tiến độ này là ước lượng lập kế hoạch, không phải thời gian đã được xác minh bằng tốc độ xử lý thực tế.
+
+VII. Phân công nhiệm vụ
+Nhóm	Trách nhiệm
+Dữ liệu và tiền xử lý	Làm sạch ba trường, kiểm chứng ngữ cảnh, tách từ
+Gán nhãn và kiểm định	Quy chuẩn, prompt, gán nhãn chatbot, kiểm tra nhãn con người
+Mô hình truyền thống	E1–E6, E9
+Transformer	E7–E8, E10
+Đánh giá và báo cáo	Chia tập, chỉ số, phân tích lỗi, tài liệu khoa học
+
+Một người có thể đảm nhận nhiều nhóm, nhưng tập chuẩn cần có ít nhất hai người gán nhãn độc lập ở giai đoạn kiểm định.
+
+VIII. Rủi ro và biện pháp kiểm soát
+Rủi ro	Phương án xử lý
+Chatbot gán quá ít Toxic	Phân tích false negative trên tập chuẩn, sửa quy tắc nếu có lỗi thực
+Chatbot gán quá nhiều Toxic	Phân tích false positive, củng cố ngoại lệ cho cảm thán và phê bình
+Nhãn tự động không nhất quán	Cố định prompt/model, kiểm thử lặp lại trên mẫu kiểm soát
+Thiếu mẫu Toxic	Lấy mẫu bổ sung có kiểm soát trong Train
+Rò rỉ giữa Train và Test	Chia theo post_id, kiểm tra trùng xuyên tập
+Sai bình luận cha	Kiểm chứng ID, đánh dấu liên kết chưa xác minh
+Thiếu ngữ cảnh	Dùng cờ thiếu dữ liệu và phân tích riêng
+Emoji bị tokenizer bỏ qua	Kiểm tra tokenization và cấu hình biểu diễn
+PhoBERT bị cắt mất bình luận	Ưu tiên giữ bình luận mục tiêu
+Tập Test không đáng tin cậy	Gán nhãn và phân xử bởi con người, không dùng để chỉnh prompt
+Dữ liệu cá nhân trong bình luận	Hạn chế truy cập, ẩn thông tin nhận diện khi chia sẻ hoặc gửi dịch vụ bên ngoài
+Chi phí chatbot/GPU vượt dự kiến	Pilot để ước lượng chi phí, triển khai theo batch và lưu checkpoint
+
+
+IX. Sản phẩm bàn giao
+1. Bộ dữ liệu sạch gồm bình luận, bài đăng và bình luận cha.
+2. Báo cáo kiểm tra chất lượng ngữ cảnh.
+3. Quy chuẩn gán nhãn Toxic/Non-toxic phiên bản chính thức.
+4. System Prompt và cấu hình chatbot gán nhãn tự động.
+5. Tập chuẩn do con người gán nhãn và báo cáo mức độ đồng thuận.
+6. Bộ dữ liệu có nhãn tự động, trạng thái rà soát và nguồn gốc nhãn.
+7. Danh sách Train/Validation/Test cố định theo post_id.
+8. Pipeline tách từ và biểu diễn BoW, TF-IDF, fastText.
+9. Mã nguồn và kết quả E1–E10.
+10. Bảng đánh giá, phân tích lỗi, báo cáo và slide trình bày.
+
+X. Cấu trúc báo cáo đề tài
+Chương	Nội dung
+Chương 1 — Giới thiệu	Bối cảnh, mục tiêu, câu hỏi nghiên cứu
+Chương 2 — Cơ sở lý thuyết	Toxic Detection, NLP tiếng Việt, NB, SVM, Transformer, vai trò ngữ cảnh
+Chương 3 — Dữ liệu và phương pháp	Tiền xử lý, ngữ cảnh, chatbot gán nhãn, kiểm định, chia tập, E1–E10
+Chương 4 — Thực nghiệm và kết quả	Thiết lập, chỉ số, so sánh mô hình, tác động ngữ cảnh, phân tích lỗi
+Chương 5 — Kết luận	Kết quả, hạn chế và hướng phát triển
+
+
+XI. Tiêu chí hoàn thành
+Đề tài được xem là hoàn thành khi:
+- Có dữ liệu sạch, giữ emoji và từ dừng, với quy trình xử lý ba trường văn bản thống nhất.
+- Có báo cáo xác minh ngữ cảnh và thống kê dữ liệu thiếu.
+- Có bộ quy chuẩn gán nhãn và chatbot được kiểm định trên nhãn chuẩn con người.
+- Các mẫu chưa phân xử không bị đưa vào Train hoặc Test chính thức.
+- Train, Validation và Test không giao nhau về post_id.
+- Có đầy đủ 8 mô hình Comment-only và 2 mô hình Context-aware.
+- Các mô hình được đánh giá trên cùng tập Test đã khóa.
+- Có so sánh trực tiếp E4–E9 và E7–E10.
+- Có phân tích Toxic F1, Recall Toxic, Macro-F1 và các trường hợp sai.
+- Có mã nguồn, cấu hình và tài liệu đủ để tái lập.

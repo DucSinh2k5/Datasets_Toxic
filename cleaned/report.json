@@ -1,0 +1,32 @@
+{
+  "rows_input": 141276,
+  "posts_input": 22144,
+  "removed_empty": 0,
+  "removed_same_context_duplicates": 4667,
+  "rows_where_emoji_count_changed": 7,
+  "rows_output": 136609,
+  "posts_output": 22144,
+  "pii_rows_comment": {
+    "URL": 2712,
+    "EMAIL": 30,
+    "USER": 12311,
+    "STUDENT_ID": 96,
+    "PHONE": 875,
+    "NUMBER": 20,
+    "NAME": 53070,
+    "ADDRESS": 221
+  },
+  "flags": {
+    "is_low_info": 6512,
+    "is_spam_candidate": 7231,
+    "post_is_ad_candidate": 8995,
+    "parent_missing": 363,
+    "post_missing": 721,
+    "cross_split_duplicate": 9014
+  },
+  "split_rows": {
+    "train": 95667,
+    "test": 20484,
+    "val": 20458
+  }
+}

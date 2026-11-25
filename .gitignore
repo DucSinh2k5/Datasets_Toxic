@@ -1,0 +1,29 @@
+# Repo này chỉ chứa code và tài liệu. Dữ liệu bình luận (kể cả bản đã che) không đưa lên đây.
+# Secret
+.env
+*.env
+# Dữ liệu
+*.xlsx
+*.xls
+*.parquet
+*.zip
+*.bin
+cleaned/*
+!cleaned/report.json
+cleaned_*/
+gan_nhan/
+data_splits_*/
+results_shared/
+shared_dataset.csv
+comment_*.csv
+facebook_post_comment_scraper/output/
+facebook_post_comment_scraper/test_output/
+facebook_post_comment_scraper/facebook_group_comment_scraper/output/
+results_chuan/*/test_predictions.csv
+results_chuan/*/val_errors.csv
+E5+E6/E5+E6/data/
+E5+E6/E5+E6/resources/vncorenlp/
+# Môi trường
+.venv/
+__pycache__/
+.ipynb_checkpoints/

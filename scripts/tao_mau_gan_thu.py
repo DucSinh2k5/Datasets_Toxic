@@ -22,7 +22,8 @@ N_CAU, N_NGAU_NHIEN = 240, 120  # còn lại chia đều cho các nhóm nhãn hi
 MAX_MOI_BAI = 2
 SEED = 42
 
-# Nhãn tiếng Anh theo Quy_chuan_gan_nhan_4_huong_NLP_N12.docx (bản nháp 2).
+# Nhãn tiếng Anh theo quy chuẩn gán nhãn từ bản nháp 2 (bản chốt: docs/Quy_chuan_gan_nhan_4_huong_NLP_N12_ban5.docx).
+# Từ 27/11/2026 nhóm không gán tay thêm; script giữ lại để tái lập mẫu vòng 1, 2.
 NHAN = {
     "toxicity": ["clean", "profane", "attack", "unk"],
     "topic": ["academics", "facilities", "administration", "student_life", "unk"],
@@ -118,7 +119,7 @@ def ghi_excel(mau, path, ten):
     lines = [f"Người gán: {ten}", "",
              "Gán ĐỘC LẬP: không bàn với người khác, không xem file của người khác.",
              "Chỉ gán cho cột text_public. post_text và parent_text chỉ để hiểu ngữ cảnh.",
-             "Theo quy chuẩn trong file Quy_chuan_gan_nhan_4_huong_NLP_N12.docx, đọc kỹ mục 7 (quy tắc rút ra từ vòng 1). Nhắc lại:",
+             "Theo quy chuẩn trong file Quy_chuan_gan_nhan_4_huong_NLP_N12_ban5.docx (bản chốt), đọc kỹ mục 3 đến 7. Nhắc lại:",
              "  stance phải hướng tới một chủ đề của trường; topic = unk thì stance chỉ được là none hoặc unk.",
              "  Đồng tình hay phản bác người đối thoại, chửi bạn, đùa trong hội thoại: stance = none (trừ khi bình luận cha nói về chủ đề của trường).",
              "  suggest: lời khuyên hoặc góp ý chỉ cụ thể việc cần làm, nơi cần đến. Chỉ trả lời được hay không, khi nào, bao nhiêu: none.",

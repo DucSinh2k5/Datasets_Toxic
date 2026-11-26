@@ -59,7 +59,7 @@ extra_gated_fields:
 Bản nháp dataset card, soạn ngày 2026-11-25.
 - Nội dung viết bằng tiếng Anh theo thông lệ Hugging Face; ghi chú TODO bằng tiếng Việt cho nhóm, xóa hết trước khi công bố.
 - Số liệu lấy từ data/cleaned/report.json (làm sạch lần 3), masked.csv và TIEN_TRINH_DATASET.md.
-- Định nghĩa nhãn tóm tắt từ docs/Quy_chuan_gan_nhan_4_huong_NLP_N12.docx (bản nháp 3) và các quy tắc mới sau vòng 1. Khi quy chuẩn đổi thì sửa mục "Label definitions".
+- Định nghĩa nhãn tóm tắt từ quy chuẩn bản nháp 3 (file đã xóa khỏi docs/ ngày 2026-11-27, còn trong commit 2b39403) và các quy tắc mới sau vòng 1. Bản chốt là docs/Quy_chuan_gan_nhan_4_huong_NLP_N12_ban5.docx (stance chặt hơn, emotion mặc định neutral, khen/cảm ơn người đối thoại là none, tuyển sinh là administration). Sửa mục "Label definitions" theo bản 5 trước khi công bố; thêm mô tả gán bằng LLM và việc gold do Claude chốt một phần.
 - Trên HF, file này là README.md ở gốc repo dataset; dữ liệu đặt trong data/*.parquet (xem configs ở trên).
 -->
 

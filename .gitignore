@@ -30,7 +30,8 @@ facebook_post_comment_scraper/**/output/
 facebook_post_comment_scraper/test_output/
 E5+E6/E5+E6/data/
 E5+E6/E5+E6/resources/vncorenlp/
-# Môi trường
+# Môi trường, cấu hình editor trên máy từng người
+.vscode/
 .venv/
 __pycache__/
 .ipynb_checkpoints/

@@ -121,6 +121,62 @@ ADDRESS = re.compile(rf"\b(?:{HOUSE}\s*,?\s*)?{ALLEY}\s*{NUM}(?:\s*,?\s*{ALLEY}\
 STREET_CUE = re.compile(r"(?i)(?:^|\s)(?:đường|phố)\s*$")
 UPPER_NAME = re.compile(rf"\b(?:NGUYỄN|NGUYEN|TRẦN|TRAN|LÊ|PHẠM|PHAM|HOÀNG|HOANG|HUỲNH|PHAN|VŨ|VÕ|ĐẶNG|BÙI|ĐỖ|NGÔ|DƯƠNG|ĐINH)(?:\s+[{UP}]+){{1,3}}\b")
 
+
+def _alt(words):
+    return "|".join(sorted(set(words), key=len, reverse=True))
+
+
+# ---- Luật bổ sung ngày 2026-11-27, sau khi soát gold vòng 1, 2 thấy còn sót (scripts/che_bo_sung.py áp các luật này
+# cho masked.csv đã có). Đã chạy thử trên toàn bộ masked.csv và đọc từng chỗ khớp trước khi thêm.
+# Tên trùng từ thường gặp nên chỉ che khi đứng sau "thầy", "thày", "cô" (tên giảng viên trong review môn học).
+TEACHER_ONLY = set("""hùng thắng thỏa thoả tâm hòa hoà xuân sỹ sĩ quy ái diệp diệu biên hiến thơm thiết tuân hiệp đạt mai
+hoa hằng lụa nguyệt thắm tuyết lợi ninh duẩn tuyên dinh trường thao thuỷ điệp sự đĩnh bách cương liễu sâm quảng hóa hoá""".split()) - GIVEN_NAMES
+# Từ đứng sau cho thấy chữ trước không phải tên ("cô tâm huyết", "cô liên hệ", "thầy cô biên soạn", "cô hiền lắm",
+# "thầy trường mình").
+TEACHER_NOT_NEXT = set("""hệ tục quan kết lạc phục sinh nhượng viên tín nhất mẽ khoản huyết lý lí sự trạng tư thuận mãn
+đáng thủ kế bị lập thực định đổi trình chế mô chuẩn tắc mắt quả hồng ngày năm tuần nhã hợp đồng thường công trọng hoạt bình
+độ bộ phúc mến tính động chương hiệu hành họa hoạ khảo hàng lắm quá thật ghê cực siêu vl vãi vcl vkl tâm nhỉ phết điện
+soạn bản giới dịch dưỡng mình mik mjk minh page này ta tôi em nào khác bạn nó đấy đó cũ mới cấp đại chuyên bên kia mn mk
+ptit thpt thcs kiếp thân trang""".split())
+MIDDLE_NAMES = set("văn thị chí trọng đức công gia xuân thu hữu bá quang minh ngọc kim thanh hồng".split())
+# Chữ thứ hai chỉ lấy khi là tên ("thầy xuân anh", "cô mai phương"); "nhàn" sau tên thường nghĩa là "dễ".
+TEACHER_NAME = re.compile(rf"\b((?i:thầy|thày|cô))\s+((?:{_alt(GIVEN_NAMES | TEACHER_ONLY)})"
+                          rf"(?:\s+(?:{_alt((GIVEN_NAMES | {'anh'}) - {'nhàn'})}))?)\b"
+                          rf"(?!\s+(?:{_alt(TEACHER_NOT_NEXT)})\b)")
+# Tên viết hoa chữ đầu sau thầy/cô ("thầy Hùng", "cô Thanh Lan"), trừ tên môn học ("cô Văn", "thầy Anh" thường là
+# giáo viên dạy môn đó).
+SUBJECT_WORDS = {"văn", "toán", "lý", "lí", "sử", "địa", "anh", "sinh", "tin", "nhạc", "họa", "hoạ", "thể", "pháp", "nga",
+                 "trung", "nhật", "hàn", "đức"}
+_CAP = {w[:1].upper() + w[1:] for w in (GIVEN_NAMES | TEACHER_ONLY) - SUBJECT_WORDS}
+_CAP_MIDDLE = {w[:1].upper() + w[1:] for w in MIDDLE_NAMES}
+TEACHER_NAME_CAP = re.compile(rf"\b((?i:thầy|thày|cô))\s+((?:(?:{_alt(_CAP_MIDDLE)})\s+(?=(?:{_alt(_CAP)})\b))?"
+                              rf"(?:{_alt(_CAP)})(?:\s+(?:{_alt(_CAP)}))?)\b(?!\s+(?i:{_alt(TEACHER_NOT_NEXT)})\b)")
+FULL_NAME_LOWER = re.compile(rf"\b((?i:thầy|thày|cô))\s+(?:{_alt(s.lower() for s in SURNAMES)})"
+                             rf"(?:\s+(?:{_alt(GIVEN_NAMES | TEACHER_ONLY | MIDDLE_NAMES)})){{1,3}}\b")  # "thầy lê văn an"
+THI_NAME = re.compile(rf"\b(?:{_alt(s.lower() for s in SURNAMES)})\s+thị\s+(?:{_alt(GIVEN_NAMES | TEACHER_ONLY)})\b")
+# Mã sinh viên thiếu tiền tố năm ("mã SV DCCN045"); mã lớp như D24DCBC không có số đuôi nên giữ.
+STUDENT_ID_CUE = re.compile(r"(?i)\b(mã\s*(?:sv|sinh\s*viên)|msv|mssv)(\s*[:.]?\s*)[a-z]{0,3}\d{0,2}[a-z]{2,4}\d{3}\b")
+STUDENT_ID_PART = re.compile(r"(?i)\bdc[a-z]{2}\d{3}\b")
+# Tên viết thường trước "ơi" ("đi thôi nam ơi"); bỏ "tổ quốc ơi", "các b nam ơi".
+LOWER_VOCATIVE = re.compile(rf"(?<!tổ )(?<!\bb )(?<!bạn )\b(?:{_alt(GIVEN_NAMES)})(?=\s+ơi\b)")
+TITLE_UPPER_WORDS = {w.upper() for w in GIVEN_NAMES | TEACHER_ONLY | MIDDLE_NAMES | {s.lower() for s in SURNAMES} | {"phí"}}
+TITLE_UPPER = re.compile(rf"\b(THẦY|THÀY|CÔ)\s+(?:{_alt(TITLE_UPPER_WORDS)})(?:\s+(?:{_alt(TITLE_UPPER_WORDS)})){{0,3}}\b")
+# "[NAME] NAM AB1C": tên viết hoa dính sau tên đã che, lấy thêm một mã có chữ số; "[NAME] LIÊN HỆ" không phải tên,
+# "HUY <mã gói cước>" là cú pháp tin nhắn hủy gói cước, không phải tên.
+NAME_UPPER = re.compile(rf"\[NAME\]\s+(?!HUY\s+[{UP}0-9]*\d)(?:{_alt(g.upper() for g in GIVEN_NAMES)})\b(?!\s+(?:HỆ|TỤC|QUAN|KẾT|LẠC|PHỤC|VIÊN|TÍN|CÔNG|ĐỘNG)\b)"
+                        rf"(?:\s+[{UP}0-9]*\d[{UP}0-9]*\b)?")
+NAME_FRAGMENTS.append((NAME_UPPER, "[NAME]"))
+SUPPLEMENT_RULES = [  # (tên luật, loại, mẫu, thay bằng), chạy theo thứ tự
+    ("ma_sv_thieu_tien_to", "STUDENT_ID", STUDENT_ID_CUE, r"\1\2[STUDENT_ID]"),
+    ("ma_sv_thieu_tien_to", "STUDENT_ID", STUDENT_ID_PART, "[STUDENT_ID]"),
+    ("ho_ten_thuong_sau_thay_co", "NAME", FULL_NAME_LOWER, r"\1 [NAME]"),
+    ("ho_thi_ten_thuong", "NAME", THI_NAME, "[NAME]"),
+    ("ten_thuong_sau_thay_co", "NAME", TEACHER_NAME, r"\1 [NAME]"),
+    ("ten_hoa_chu_dau_sau_thay_co", "NAME", TEACHER_NAME_CAP, r"\1 [NAME]"),
+    ("ten_thuong_truoc_oi", "NAME", LOWER_VOCATIVE, "[NAME]"),
+    ("ten_hoa_sau_THAY_CO", "NAME", TITLE_UPPER, r"\1 [NAME]"),
+]
+
 EMOJI = re.compile(r"[\U00010000-\U0010FFFF☀-➿]")
 PLACEHOLDER = re.compile(r"\[(?:URL|EMAIL|USER|STUDENT_ID|PHONE|NUMBER|NAME|ADDRESS)\]")
 AD = re.compile(r"(?i)inbox|\bib\b|zalo|tuyển dụng|cho thuê|phòng trọ|\bbán\s|\bpass\s|\bship\b|giá\s\d")
@@ -206,7 +262,19 @@ def mask(text):
     text = sub(TITLE_NAME, lambda m: m.group() if m.group(2) in NOT_NAME_SINGLE else f"{m.group(1)} [NAME]", text, "NAME")
     text = sub(LOWER_NAME, lambda m: f"{m.group(1)} [NAME]", text, "NAME")
     text = sub(VOCATIVE, lambda m: m.group() if m.group(1) in NOT_NAME_SINGLE else "[NAME]", text, "NAME")
-    return merge_name_fragments(text), ";".join(sorted(found))
+    text, extra = mask_supplement(text)
+    return merge_name_fragments(text), ";".join(sorted(found | {kind for _, kind in extra}))
+
+
+def mask_supplement(text):
+    """Chạy SUPPLEMENT_RULES. Trả về (văn bản, [(tên luật, loại)] đã khớp)."""
+    hits = []
+    for name, kind, pattern, repl in SUPPLEMENT_RULES:
+        new = pattern.sub(repl, text)
+        if new != text:
+            hits.append((name, kind))
+            text = new
+    return text, hits
 
 
 def split_chunks(text):
@@ -358,6 +426,37 @@ def self_check():
     }
     for raw, want in cases.items():
         assert mask(normalize(raw))[0] == want, (raw, mask(normalize(raw))[0])
+    # Luật bổ sung ngày 2026-11-27 (tên mẫu, không phải tên trong dữ liệu).
+    bo_sung = {
+        "học thầy hùng điểm cao": "học thầy [NAME] điểm cao",
+        "môn A chọn thầy thỏa, thầy thắng": "môn A chọn thầy [NAME], thầy [NAME]",
+        "môn B chọn thầy xuân anh nhé": "môn B chọn thầy [NAME] nhé",
+        "Cô tâm dạy rất tâm huyết": "Cô [NAME] dạy rất tâm huyết",
+        "cô tâm huyết lắm": "cô tâm huyết lắm",
+        "nhờ cô liên hệ lại": "nhờ cô liên hệ lại",
+        "các thầy cô biên soạn": "các thầy cô biên soạn",
+        "thầy trường mình dạy hay": "thầy trường mình dạy hay",
+        "cô bảo nộp bài": "cô bảo nộp bài",
+        "học cô Lan dạy dễ hiểu": "học cô [NAME] dạy dễ hiểu",
+        "thầy Thanh Lan nhé": "thầy [NAME] nhé",
+        "cô tâm sự với em": "cô tâm sự với em",
+        "thầy lê văn nam nhé": "thầy [NAME] nhé",
+        "DSA trần thị lan lúc 7h": "DSA [NAME] lúc 7h",
+        "Cảm ơn bạn mã SV DCCN045": "Cảm ơn bạn mã SV [STUDENT_ID]",
+        "mã sv D24DCBC có nghĩa là gì": "mã sv D24DCBC có nghĩa là gì",
+        "đi thôi nam ơi": "đi thôi [NAME] ơi",
+        "các b nam ơi": "các b nam ơi",
+        "đã quá tổ quốc ơi": "đã quá tổ quốc ơi",
+        "THẦY THẮNG dạy lái xe": "THẦY [NAME] dạy lái xe",
+        "THẦY CÔ KHÔNG MUỐN": "THẦY CÔ KHÔNG MUỐN",
+    }
+    for raw, want in bo_sung.items():
+        assert mask(raw)[0] == want, (raw, mask(raw)[0])
+    assert merge_name_fragments("[NAME] VY ib nhé") == "[NAME] ib nhé"
+    assert merge_name_fragments("[NAME] NAM AB7D") == "[NAME]"
+    assert merge_name_fragments("[NAME] HUY AB7D") == "[NAME] HUY AB7D"
+    assert merge_name_fragments("[NAME] HUY nhé") == "[NAME] nhé"
+    assert merge_name_fragments("[NAME] LIÊN HỆ NGAY") == "[NAME] LIÊN HỆ NGAY"
     assert normalize("'@mọi người") == "@mọi người" and normalize("'abc") == "'abc"
 
 

@@ -29,7 +29,7 @@ Bàn giao ngày 2026-11-25, sắp xếp lại cấu trúc repo cùng ngày. **Ng
 - Đề xuất trước, sửa sau: khi rà nhãn, ghi đề xuất và lý do ra file Excel cho nhóm duyệt; chỉ ghi thẳng vào gold khi người dùng bảo. Nếu Claude là người chốt, ghi rõ để paper khai báo.
 - Không commit hay đẩy dữ liệu: mọi dữ liệu nằm trong `data/`; `.gitignore` gốc chặn cả `data/` (trừ `data/cleaned/report.json`) và mọi `.xlsx`, `.parquet`, `.zip`. Xem `git status` trước khi commit.
 - Chạy lệnh từ thư mục gốc repo. Script gán thử cần `pandas`, `openpyxl`; có máy chưa cài `openpyxl` (`pip install openpyxl`).
-- Đọc docx: máy không có pandoc và python-docx. Dùng `python scripts/ra_soat/docx2txt.py <file.docx>`; script ghi `<tên>.docx.txt` vào thư mục đang đứng, nên chạy từ thư mục tạm.
+- Đọc docx: máy không có pandoc và python-docx. Dùng `python scripts/docx2txt.py <file.docx>`; script ghi `<tên>.docx.txt` vào thư mục đang đứng, nên chạy từ thư mục tạm.
 - Windows: in tiếng Việt từ Python cần `PYTHONIOENCODING=utf-8`.
 
 ## 3. Bộ nhãn và các quy tắc đã chốt
@@ -82,25 +82,20 @@ Quy tắc quan trọng (bản 5):
   - Claude sao lưu file chốt (`data/gan_nhan/vong2/da_chot/..._truoc_ra_soat.xlsx`) rồi sửa 153 ô trên 123 câu theo bản 5. Ô đổi tô xanh, lý do ở `ghi_chu_hop`, danh sách ở sheet `da_ap_dung`.
   - `scripts/xuat_gold.py` xuất `data/gan_nhan/vong2/gold_vong2.csv` (240 câu; 123 câu có nhãn `ra_soat_claude`). Phân bố stance: none 194, support 18, suggest 15, oppose 10, unk 3.
   - Không làm vòng 3; Sinh không gán vòng 2.
-- **Còn lộ thông tin cá nhân:** mã sinh viên trong bình luận cha của câu 1 vòng 2; câu 58, 73, 215, 218 vòng 2 nghi còn tên người; 4 câu sót tên Triệu ghi ở vòng 1.
+- **Gold vòng 1 theo bản 5** (2026-11-27, Claude): đổi 171 ô trên 131 câu, sao lưu `gold_vong1_truoc_ban5.csv`, lý do từng ô ở `data/gan_nhan/vong1/ra_soat_gold_vong1_ban5.xlsx`. Gold vòng 1 sửa thẳng trong csv, không có file chốt xlsx mới. 184/240 câu có nhãn `ra_soat_claude`; stance support chỉ còn 6 câu.
+- **Che bổ sung** (2026-11-27): 7 luật mới trong `clean_dataset.py` (`SUPPLEMENT_RULES`, gọi trong `mask()`), `scripts/che_bo_sung.py` áp cho masked.csv (259 đoạn) và 108 ô trong `data/gan_nhan/`. Danh sách che tay và bản sao lưu trong `data/cleaned/che_bo_sung/` (có tên thật). Triệu đã xác nhận đợt 1; đợt 2 (219 đoạn: tên viết hoa chữ đầu sau thầy/cô, tên mới, 27 chuỗi che tay, trả lại một chỗ che nhầm) Triệu đã xác nhận (27/11). Script luôn dựng lại từ bản gốc `masked_truoc_che_bo_sung.csv` và ghi file theo đợt, không ghi đè file đã xác nhận. Mọi câu lộ thông tin đã biết ở gold hai vòng đã che.
+- **Gán bằng LLM** (2026-11-27): `scripts/llm/prompt_ban5.md` (`ban5-p1`), `gan_nhan_llm.py`, `danh_gia_llm.py`, `chung.py`. Đã chạy thử không gọi API; chưa có khóa API nên chưa chạy trên gold, prompt chưa khóa.
 - **Sắp xếp lại repo** (2026-11-25): `docs/`, `scripts/`, `data/` (đổi tên từ `Datasets_N12_ban_giao/`), `huggingface/`. Đã kiểm tra `scripts/tao_mau_gan_thu.py` ở chỗ mới sinh lại đúng mẫu vòng 1 và vòng 2. Phần giai đoạn cũ đã xóa (xem mục 1).
 
 ## 5. Lộ trình tiếp theo
 
 Nhóm không gán tay nữa: LLM gán, Claude phân xử, người trong nhóm duyệt kết quả và lo pháp lý. Chi tiết và lịch nằm ở `docs/Ke_hoach_tiep_theo_NLP_N12.docx`.
 
-1. **Rà gold vòng 1 theo bản 5** (gold vòng 1 chốt theo bản 3).
-   - Sao lưu, ghi đề xuất và lý do ra Excel, rồi áp dụng.
-   - Đánh dấu `ra_soat_claude` ở cột cách chốt.
-   - Chuẩn hóa `emotion_2` sang dấu `;`.
-2. **Che nốt thông tin cá nhân** ở `masked.csv` và mọi file sinh ra từ nó.
-   - Sao lưu và ghi log; quét các dạng lặp lại; thêm luật vào `clean_dataset.py`.
-   - Nhờ một người xác nhận.
-3. **Prompt và script gán bằng LLM.**
-   - Prompt viết từ bản 5; ví dụ lấy từ gold, không lấy từ tập test.
-   - Đầu ra JSON có 5 cột nhãn và cờ `hard`; script kiểm tra nhãn hợp lệ và ràng buộc.
-   - Chạy theo batch, chạy tiếp được khi lỗi; ghi log, token, chi phí; nhiệt độ 0. Chỉ gửi dữ liệu đã che.
-4. **Chạy thử trên 480 câu gold.**
+1. ~~Rà gold vòng 1 theo bản 5~~ (xong 27/11).
+2. ~~Che nốt thông tin cá nhân~~ (xong 27/11: Triệu xác nhận cả hai đợt; thư mục ở `data/cleaned/private/che_bo_sung/`).
+   - Cách gọi LLM: nhóm đang chọn theo `docs/Cach_gan_nhan_LLM_mien_phi_NLP_N12.docx` (khuyến nghị Claude qua gói `claude -p` + Mistral Experiment đã tắt huấn luyện + Qwen3 trên Kaggle). Script mới gọi được Claude API và OpenAI; cần thêm phần gọi API tương thích OpenAI (base_url, biến khóa) hoặc `claude -p` theo lựa chọn. Không dùng Gemini API miễn phí (dữ liệu dùng để cải thiện sản phẩm).
+3. ~~Prompt và script gán bằng LLM~~ (xong 27/11, `scripts/llm/`). Claude thế hệ 5 không nhận `temperature` (lỗi 400), nên tái lập bằng mô hình + `effort` + phiên bản và mã băm prompt. Sửa prompt thì tăng `PROMPT_VERSION`.
+4. **Chạy thử trên gold**: lần 1 Qwen2.5-7B-Instruct (480 câu) đã chạy, κ chưa đạt ở cả 4 hướng (xem TIEN_TRINH). Lần 2 (Qwen3-14B-AWQ, gold vòng 2): tách hướng tốt hơn, đạt stance và emotion. Đã sửa prompt lên `ban5-en-tach-p2`. Lần 3 (Qwen3-30B-A3B, p2, cả hai bộ gold): topic đạt, stance và emotion kém 14B, toxicity tự bịa bằng chứng. Lần 4 (14B, p2): chọn Qwen3-14B (hơn 30B-A3B ở 3/4 hướng); topic đạt, toxicity 0,480, stance 0,488 chưa đạt. p3 (chỉ toxicity: trường `bang_chung`, kiểm tra bằng chứng trong code, ví dụ tự đặt): toxicity vòng 1 0,660, vòng 2 0,600. **Ngày 27/11 Triệu đồng ý khóa Qwen3-14B-AWQ + `ban5-en-tach-p3` (sha e4cc4216433b); không sửa prompt nữa.** Gán toàn bộ: 14 đợt (`data/llm/dot/phan_cong.csv`), 4 người chạy `kaggle_gan_dot.ipynb` trên Kaggle với gói `goi_<tên>.zip`; Triệu ghép bằng `ghep_ket_qua.py` (tiến độ, `--dot-bu`, `--ghi`). Đã bỏ ý tưởng cột Note cho câu khó. Cách gọi khác khóa đặt trong biến môi trường, không hỏi người dùng dán khóa vào chat). Lệnh ở mục "Gán bằng LLM" của TIEN_TRINH.
    - Chỉnh prompt trên vòng 2, kiểm tra trên vòng 1.
    - Dùng 2–3 LLM, ít nhất một LLM khác hãng, vì gold có nhiều nhãn do Claude chốt.
    - Báo κ theo từng hướng, báo riêng phần nhãn `dong_y`.
@@ -123,7 +118,7 @@ Nhóm không gán tay nữa: LLM gán, Claude phân xử, người trong nhóm d
 
 Làm song song, không chặn việc gán:
 - **Pháp lý, đạo đức (chặn công bố):** hỏi giảng viên về phê duyệt đạo đức; xác định group công khai hay kín (file dữ liệu không có cột group, phải tra danh sách lúc cào); điều khoản Meta (scraper dùng cookie); Luật 91/2025/QH15 (Điều 14, 19) với người có chuyên môn; loại group kín khỏi bản công bố nếu chưa có căn cứ. Không đưa ra kết luận pháp lý thay người có chuyên môn.
-- **Làm sạch còn dở:** sửa 4 câu sót tên Triệu báo ở vòng 1 và các câu trong sheet `thong_tin_ca_nhan` của file rà soát vòng 2. Che trong `masked.csv` và mọi file sinh từ nó (sao lưu trước, ghi log); lỗi lặp lại thì thêm luật vào `clean_dataset.py`; đọc khoảng 50 dòng `post_text` và 50 dòng `parent_text`; quyết định giữ hay bỏ các dòng cờ spam / ít thông tin; cập nhật mục kết quả trong `docs/Quy_tac_lam_sach_du_lieu_NLP_N12.docx` theo lần chạy 3.
+- **Làm sạch còn dở:** phát hiện thêm chỗ sót thì thêm luật vào `SUPPLEMENT_RULES` hoặc dòng vào `data/cleaned/private/che_bo_sung/thu_cong.csv` rồi chạy `python scripts/che_bo_sung.py --ghi` (chạy lại an toàn); đọc khoảng 50 dòng `post_text` và 50 dòng `parent_text`; quyết định giữ hay bỏ các dòng cờ spam / ít thông tin; cập nhật mục kết quả trong `docs/Quy_tac_lam_sach_du_lieu_NLP_N12.docx` theo lần chạy 3.
 - Giai đoạn 1 còn mở: đối chiếu định nghĩa OFFENSIVE, HATE của ViHSD và nhãn UIT-VSMEC với bài báo gốc.
 
 ## 6. Bản đồ file chính
@@ -135,19 +130,19 @@ Làm song song, không chặn việc gán:
 | `scripts/` | Toàn bộ code; chạy từ thư mục gốc repo |
 | `data/` | Dữ liệu nhận riêng (`cleaned/`, `gan_nhan/`), không commit |
 | `huggingface/README.md` | Dataset card nháp để công bố trên Hugging Face |
-| `docs/Quy_chuan_gan_nhan_4_huong_NLP_N12_ban5.docx` | Quy chuẩn gán nhãn, bản 5 (bản chốt). Bản 4 giữ để đối chiếu; bản 3 đã xóa, còn trong commit `2b39403` |
-| `scripts/xuat_gold.py <vòng> <file_chốt> [người chốt]` | Xuất gold từ file chốt, kiểm tra, ghi cách chốt |
+| `docs/Quy_chuan_gan_nhan_4_huong_NLP_N12_ban5.docx` | Quy chuẩn gán nhãn, bản 5 (bản chốt). Bản 4 đã xóa (commit `46c38cd`), bản 4 từng giữ để đối chiếu; bản 3 đã xóa, còn trong commit `2b39403` |
 | `data/gan_nhan/vong2/gold_vong2.csv` | Gold vòng 2 theo bản 5 (240 câu) |
 | `docs/Thiet_ke_du_lieu_da_huong_NLP_N12.docx` | Thiết kế 4 hướng, so sánh UIT-VSFC, UIT-VSMEC, ViHSD |
 | `docs/Quy_tac_lam_sach_du_lieu_NLP_N12.docx`, `scripts/clean_dataset.py` | Quy trình và script làm sạch |
 | `data/cleaned/masked.csv` | Dataset đã che, 16 cột: `post_uid`, `comment_uid`, `parent_uid`, `comment_type`, `post_text`, `parent_text`, `text_public`, `split`, `data_status`, `pii_types`, `is_low_info`, `is_spam_candidate`, `post_is_ad_candidate`, `parent_missing`, `post_missing`, `cross_split_duplicate` |
-| `scripts/tao_mau_gan_thu.py [vòng]` | Tạo file gán thử, không lấy lại câu các vòng trước |
-| `scripts/tong_hop_gan_thu.py <out.xlsx> <file>...` | Tổng hợp, κ, Fleiss κ |
-| `data/gan_nhan/vong1/gold_vong1.csv` | Gold vòng 1 sau rà (240 câu) |
+| `data/gan_nhan/vong1/gold_vong1.csv` | Gold vòng 1 theo bản 5 (240 câu, rà 27/11) |
+| `scripts/che_bo_sung.py [--ghi]` | Che bổ sung masked.csv và file gán nhãn; dữ liệu riêng (danh sách che tay, bản gốc, file xác nhận) ở `data/cleaned/private/che_bo_sung/` |
+| (đã xóa 27/11) | `scripts/tao_mau_gan_thu.py`, `tong_hop_gan_thu.py`, `xuat_gold.py`: lấy lại bằng `git checkout 46c38cd -- scripts/<tên>` |
+| `scripts/llm/` | Prompt (Việt `prompt_ban5.md`, Anh `prompt_ban5_en.md`, chọn bằng `--prompt`), gán bằng LLM (`gan_nhan_llm.py`: claude, openai, vllm; `--thu` để chạy thử), chấm (`danh_gia_llm.py`), gói Kaggle (`dong_goi_kaggle.py`) ; bộ prompt tách hướng `prompt_ban5_en_tach/` (truyền thư mục vào `--prompt`, mỗi câu 4 lần gọi), `--khong-suy-nghi` cho Qwen3, notebook khóa prompt `kaggle_khoa_prompt.ipynb` (chọn mô hình bằng `MO_HINH`, cả hai bộ gold); `danh_gia_llm.py --bo-trung-prompt` bỏ câu gold trùng ví dụ trong prompt |
 | `data/gan_nhan/vong1/*_da_chot.xlsx` | Nhãn và lý do đợt rà gold vòng 1 |
-| `data/gan_nhan/vong2/` | `tong_hop_vong2.csv` (nguồn mẫu), bài của Hảo, Long trong `da_gan/`, file chốt `tong_hop_vong2_Hao_Long.xlsx` (Triệu chốt 27/11), `da_chot/` để sao lưu |
+| `data/gan_nhan/vong2/` | Bài của Hảo, Long trong `da_gan/`, file chốt `tong_hop_vong2_Hao_Long.xlsx` (Triệu chốt 27/11, sheet `da_ap_dung`); nguồn mẫu ở cột `nguon_mau` của gold |
 | `data/gan_nhan/vong2/ra_soat_chot_vong2_Hao_Long.xlsx` | Đề xuất rà file chốt vòng 2 (Claude, 27/11): sheet `de_xuat` (130 ô, mức A–D, cột `nhom_quyet` để Triệu duyệt), `can_nhom_quyet` (9 câu hỏi), `thong_tin_ca_nhan`, `thong_ke` |
-| `scripts/ra_soat/docx2txt.py` | Đọc docx khi không có pandoc (script rà gold vòng 1 đã xóa ngày 27/11) |
+| `scripts/docx2txt.py` | Đọc docx khi không có pandoc |
 
 ## 7. Cách trả lời người dùng
 
